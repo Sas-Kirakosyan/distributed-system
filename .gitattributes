@@ -1,0 +1,7 @@
+# Always store and check out text files with LF line endings.
+# Files that end up inside Linux containers (shell scripts, SQL, configs)
+# can break with Windows CRLF endings.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary

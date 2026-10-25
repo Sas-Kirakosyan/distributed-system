@@ -1,0 +1,40 @@
+# Go build output
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+/bin/
+/dist/
+order-service/order-service
+payment-service/payment-service
+
+# Test coverage
+coverage.*
+*.coverprofile
+
+# Go workspace (local only)
+go.work
+go.work.sum
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Editors / IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local data / logs
+*.log
+tmp/

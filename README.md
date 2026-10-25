@@ -24,6 +24,12 @@
 
 Tasks marked 👤 are mine. Tasks marked 🤖 are Claude's.
 
+**Writing rule:** All docs, tasks and explanations use **simple B1-level English**:
+short sentences, common words, one idea per sentence. Explain technical words the first time they appear.
+
+📚 **Docs:**
+- [docs/database.md](docs/database.md) — how the service connects to Postgres (no ORM, connection pool, login, security)
+
 ---
 
 ## Step 1 — One service, one database (~1.5–2 weeks)

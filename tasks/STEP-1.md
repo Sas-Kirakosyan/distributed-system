@@ -1,108 +1,118 @@
-# Step 1 — Board: One service, one database
+# Step 1 — Task board: one service, one database
 
-**Epic:** DS-E1 — Containerized Order Service with Postgres
-**Goal:** `docker compose up` starts Postgres + Order Service; orders can be created and read over HTTP; I understand what happens when the DB goes down.
+**Epic:** DS-E1 — Order Service + Postgres in Docker
+**Goal:** One command (`docker compose up`) starts Postgres and the Order Service.
+I can create an order and read it over HTTP. I know what happens when the database stops.
 
-| Key | Title | Type | Assignee | Status |
+| Key | Title | Type | Who | Status |
 |---|---|---|---|---|
-| DS-1 | Set up WSL2 + Docker Desktop | Task | 👤 Me | ✅ Done |
-| DS-2 | Order Service Go code | Story | 🤖 Claude | ✅ Done (review pending) |
-| DS-3 | Create `orders` table init script | Task | 👤 Me | 🔲 To Do |
-| DS-4 | Multi-stage Dockerfile for Order Service | Task | 👤 Me | 🔲 To Do |
-| DS-5 | `docker-compose.yml` with Postgres + Order Service | Task | 👤 Me | 🔲 To Do |
-| DS-6 | Experiment: database outage | Spike | 👤 Me | 🔲 To Do |
+| DS-1 | Install WSL2 + Docker Desktop | Task | 👤 Me | ✅ Done |
+| DS-2 | Order Service Go code | Story | 🤖 Claude | ✅ Done (I must review it) |
+| DS-3 | SQL script for the `orders` table | Task | 👤 Me | 🔲 To Do |
+| DS-4 | Multi-stage Dockerfile | Task | 👤 Me | 🔲 To Do |
+| DS-5 | `docker-compose.yml` | Task | 👤 Me | 🔲 To Do |
+| DS-6 | Experiment: stop the database | Spike | 👤 Me | 🔲 To Do |
 
-Suggested order: **DS-2 review → DS-3 → DS-4 → DS-5 → DS-6**. DS-5 needs DS-3 and DS-4.
+**Order:** DS-2 review → DS-3 → DS-4 → DS-5 → DS-6. (DS-5 needs DS-3 and DS-4.)
 
-> **How to use the hints:** try without them first. Open **Hint 1** only when stuck for 15+ minutes, **Hint 2** only after Hint 1. The point is to struggle a bit — that's where learning happens.
+> **How to use the hints:** First try without hints.
+> Stuck for 15+ minutes? Open **Hint 1**. Still stuck? Open **Hint 2**.
+> A little struggle is good — this is how you learn.
 
 ---
 
-## DS-1 — Set up WSL2 + Docker Desktop
+## DS-1 — Install WSL2 + Docker Desktop
 
-**Type:** Task · **Assignee:** 👤 Me · **Status:** ✅ Done
+**Type:** Task · **Who:** 👤 Me · **Status:** ✅ Done
 
-Verified: WSL 2, Docker 29.7.2, Compose v5.3.1, Go 1.27.1, `hello-world` container runs.
+Checked: WSL 2, Docker 29.7.2, Compose v5.3.1, Go 1.27.1. The `hello-world` container runs.
 
-**Remember:** Docker Desktop must be running before any `docker` command works.
+**Remember:** Docker Desktop must be **open** before you use any `docker` command.
 
 ---
 
 ## DS-2 — Order Service Go code
 
-**Type:** Story · **Assignee:** 🤖 Claude · **Reviewer:** 👤 Me · **Status:** ✅ Done (review pending)
+**Type:** Story · **Who:** 🤖 Claude writes, 👤 I review · **Status:** ✅ Done (I must review it)
 
-**Description**
-As a client, I want to create an order and fetch it by id over HTTP, so that orders are stored durably in Postgres.
+**Story**
+As a client, I want to create an order and get it by its id over HTTP.
+The order must be saved in Postgres, so it is not lost.
 
-**What was built**
+**Files**
 ```
 order-service/
 ├── go.mod / go.sum
-├── main.go                     # wiring: config → pool → router → HTTP server, graceful shutdown
+├── main.go                     # starts everything: config → pool → router → HTTP server
 └── internal/
     ├── config/config.go        # reads PORT (default 8080) and DATABASE_URL (required)
     └── order/
-        ├── order.go            # Order model + statuses
-        ├── repository.go       # all SQL lives here (pgxpool)
-        └── handler.go          # HTTP: validation, status codes, per-request DB timeout
+        ├── order.go            # the Order struct and status values
+        ├── repository.go       # all SQL is here (uses pgxpool)
+        └── handler.go          # HTTP: checks input, returns status codes, DB timeout
 ```
 
-**API contract**
+**API**
 
-| Method | Path | Body | Success | Errors |
+| Method | Path | Body | OK | Errors |
 |---|---|---|---|---|
-| POST | `/orders` | `{"user_id": "u1", "amount": 1999}` | `201` + order JSON | `400` bad input, `500` DB error |
-| GET | `/orders/:id` | — | `200` + order JSON | `400` id not a UUID, `404` not found, `500` |
-| GET | `/health` | — | `200 {"status":"ok","db":"up"}` | `503` DB unreachable |
+| POST | `/orders` | `{"user_id": "u1", "amount": 1999}` | `201` + order | `400` bad input, `500` DB error |
+| GET | `/orders/:id` | — | `200` + order | `400` id is not a UUID, `404` not found, `500` |
+| GET | `/health` | — | `200 {"status":"ok","db":"up"}` | `503` DB not reachable |
 
-**My review checklist (acceptance criteria)** — answer out loud, without looking:
-- [ ] Walk through `POST /orders` from the HTTP request to the SQL `INSERT` and back.
-- [ ] Why does `main.go` ping the DB at startup instead of waiting for the first request?
-- [ ] Why is every query wrapped in `context.WithTimeout`? What happens without it?
+`amount` is in **cents**: `1999` = 19.99.
+
+📖 **Read first:** [docs/database.md](../docs/database.md) — how we connect to Postgres (no ORM, pool, login, security).
+
+**Review checklist** — I can answer these out loud, without looking:
+- [ ] Follow `POST /orders` from the HTTP request to the SQL `INSERT` and back.
+- [ ] Why does `main.go` check the DB (`Ping`) at start?
+- [ ] Why does every query have `context.WithTimeout`? What happens without it?
 - [ ] Why is `amount` an `int64` in cents and not a `float64`?
-- [ ] Why does a `500` hide the real error from the client, but log it?
-- [ ] What does `pgxpool` give me that a single connection wouldn't?
-- [ ] What happens on `docker stop` (SIGTERM)? Why does graceful shutdown matter?
+- [ ] For a `500` error, why do we hide the real error from the client but write it to the log?
+- [ ] What does `pgxpool` give us? Why not one single connection?
+- [ ] What happens on `docker stop`? Why is a "graceful shutdown" important?
 
 ---
 
-## DS-3 — Create `orders` table init script
+## DS-3 — SQL script for the `orders` table
 
-**Type:** Task · **Assignee:** 👤 Me · **Status:** 🔲 To Do
+**Type:** Task · **Who:** 👤 Me · **Status:** 🔲 To Do
 
 **Description**
-Postgres needs an `orders` table before the service can work. Create it with a plain SQL script that Postgres runs automatically on first start.
+The service needs an `orders` table in Postgres. Write a simple SQL script that creates it.
+Postgres will run this script by itself on the first start (you connect it in DS-5).
 
 **File:** `order-service/db/init.sql`
 
 **Acceptance criteria**
-- [ ] The table matches this contract **exactly** (the Go code depends on it):
+- [ ] The table looks **exactly** like this (the Go code needs these names and types):
 
-  | Column | Requirements |
+  | Column | Rules |
   |---|---|
-  | `id` | UUID, primary key, generated by Postgres |
-  | `user_id` | text, not null |
-  | `amount` | 64-bit integer (cents), not null, must be > 0 |
+  | `id` | UUID, primary key, Postgres makes it |
+  | `user_id` | text, cannot be empty (not null) |
+  | `amount` | 64-bit whole number (cents), not null, must be bigger than 0 |
   | `status` | text, not null |
-  | `created_at` | timestamp **with time zone**, not null, defaults to "now" |
+  | `created_at` | time **with time zone**, not null, default = now |
 
-- [ ] The script can be run twice without failing.
-- [ ] I can answer: why let the DB generate the id? Why `TIMESTAMPTZ` over `TIMESTAMP`? Why a DB `CHECK` when Go already validates?
+- [ ] If the script runs two times, it does not fail.
+- [ ] I can answer: Why does the DB make the `id`, and not Go? Why `TIMESTAMPTZ` and not `TIMESTAMP`?
+  Why check `amount > 0` in the DB, when Go already checks it?
 
 <details>
 <summary>Hint 1</summary>
 
-- Look up `CREATE TABLE IF NOT EXISTS` (covers "run twice").
-- Postgres has a built-in function for random UUIDs — search "postgres gen_random_uuid".
-- The 64-bit integer type in Postgres is `BIGINT`.
-- A rule like "amount must be positive" is a `CHECK (...)` constraint.
+- "Runs two times without failing" → search `CREATE TABLE IF NOT EXISTS`.
+- Postgres has a built-in function that makes a random UUID → search `gen_random_uuid`.
+- A 64-bit whole number in Postgres is `BIGINT`.
+- A rule like "must be bigger than 0" is a `CHECK (...)` constraint.
 </details>
 
 <details>
 <summary>Hint 2</summary>
 
-Shape of the statement (fill in the blanks):
+Fill in the blanks:
 
 ```sql
 CREATE TABLE IF NOT EXISTS orders (
@@ -117,42 +127,46 @@ CREATE TABLE IF NOT EXISTS orders (
 
 ---
 
-## DS-4 — Multi-stage Dockerfile for Order Service
+## DS-4 — Multi-stage Dockerfile
 
-**Type:** Task · **Assignee:** 👤 Me · **Status:** 🔲 To Do
+**Type:** Task · **Who:** 👤 Me · **Status:** 🔲 To Do
 
 **Description**
-Package the Order Service as a small, secure container image. Use a **multi-stage build**: one stage with the full Go toolchain to compile, and a second tiny stage that contains only the compiled binary.
+Put the Order Service into a small and safe Docker image.
+Use a **multi-stage build**, which means two stages:
 
-**Files:** `order-service/Dockerfile`, `order-service/.dockerignore`
+1. **Build stage:** has the full Go tools. It compiles the code into one binary file.
+2. **Run stage:** a very small image. It has **only** the binary — no Go tools, no source code.
+
+**Files:** `order-service/Dockerfile` and `order-service/.dockerignore`
 
 **Acceptance criteria**
-- [ ] **Build stage** uses an official `golang` image matching `go.mod` (Go 1.27), and is named (e.g. `AS build`).
-- [ ] `go.mod` and `go.sum` are copied and `go mod download` runs **before** the rest of the source is copied.
-- [ ] Produces a **static** Linux binary (no C dependencies).
-- [ ] **Runtime stage** uses a minimal base image and contains **only** the binary.
-- [ ] Container runs as a **non-root** user.
-- [ ] Port 8080 is documented with `EXPOSE`; the binary is the `ENTRYPOINT`.
-- [ ] `.dockerignore` excludes things that don't belong in the build (git folder, binaries, notes, editor files).
-- [ ] `docker build -t order-service ./order-service` succeeds.
-- [ ] I wrote down the image size of my final image vs. the `golang` base image.
-- [ ] I can answer: why is the final image so much smaller? Why copy `go.mod` first (what's layer caching)? Why non-root?
+- [ ] The build stage uses an official `golang` image with the same version as `go.mod` (1.27). The stage has a name (for example `AS build`).
+- [ ] First copy `go.mod` and `go.sum`, run `go mod download`, and **after that** copy the rest of the code.
+- [ ] The binary is **static** (it needs no C libraries).
+- [ ] The run stage uses a very small base image and has **only** the binary.
+- [ ] The container does **not** run as `root`.
+- [ ] `EXPOSE 8080`, and the binary is the `ENTRYPOINT`.
+- [ ] `.dockerignore` keeps unneeded files out of the build (`.git`, binaries, notes, editor files).
+- [ ] `docker build -t order-service ./order-service` works.
+- [ ] I wrote down two sizes: my final image, and the `golang` base image.
+- [ ] I can answer: Why is the final image so much smaller? Why copy `go.mod` first (what is layer caching)? Why not run as root?
 
 <details>
 <summary>Hint 1</summary>
 
-- Multi-stage = multiple `FROM` lines. Later stages can copy from earlier ones with `COPY --from=<stage-name>`.
-- Static Go binary: set the env var `CGO_ENABLED=0` (and `GOOS=linux`) when running `go build`.
-- Good tiny runtime images: `gcr.io/distroless/static-debian12` (no shell, very small) or `alpine` (has a shell, nice for debugging).
-- Distroless has a ready-made non-root variant — look at its tags.
-- Bonus: find out what `go build -ldflags="-s -w"` does.
-- Check sizes with `docker images`.
+- Multi-stage = more than one `FROM` line. A later stage can take files from an earlier stage with `COPY --from=<stage-name>`.
+- Static Go binary: set `CGO_ENABLED=0` and `GOOS=linux` when you run `go build`.
+- Small run images: `gcr.io/distroless/static-debian12` (very small, no shell) or `alpine` (small, has a shell — good for debugging).
+- Distroless has a version that is already non-root. Look at its tags.
+- Bonus: what does `go build -ldflags="-s -w"` do?
+- See image sizes with `docker images`.
 </details>
 
 <details>
 <summary>Hint 2</summary>
 
-Skeleton (fill in the blanks):
+Fill in the blanks:
 
 ```dockerfile
 # ---- build stage ----
@@ -163,7 +177,7 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -o /out/order-service .
 
-# ---- runtime stage ----
+# ---- run stage ----
 FROM ____
 COPY --from=____ /out/order-service /order-service
 USER ____
@@ -174,41 +188,45 @@ ENTRYPOINT ["____"]
 
 ---
 
-## DS-5 — `docker-compose.yml` with Postgres + Order Service
+## DS-5 — `docker-compose.yml`
 
-**Type:** Task · **Assignee:** 👤 Me · **Status:** 🔲 To Do · **Blocked by:** DS-3, DS-4
+**Type:** Task · **Who:** 👤 Me · **Status:** 🔲 To Do · **Needs:** DS-3, DS-4
 
 **Description**
-One command (`docker compose up --build`) should start Postgres and the Order Service, with the table created automatically and the service connecting to the DB by container name.
+One command, `docker compose up --build`, starts Postgres and the Order Service.
+The table is created by itself. The service finds Postgres by its **service name**.
 
-**File:** `docker-compose.yml` (project root)
+📖 Read [docs/database.md](../docs/database.md) sections 3 and 4 first (connection URL and login).
+
+**File:** `docker-compose.yml` (in the project root folder)
 
 **Acceptance criteria**
-- [ ] `postgres` service: official image (e.g. `postgres:17`), sets user / password / database name via env vars.
-- [ ] `init.sql` from DS-3 is mounted so Postgres runs it on first start.
-- [ ] Postgres data is stored in a **named volume** (survives `docker compose down`).
+- [ ] A `postgres` service: official image (for example `postgres:17`), with user, password and database name set by env vars.
+- [ ] Your `init.sql` (DS-3) is mounted, so Postgres runs it on the first start.
+- [ ] Postgres data is in a **named volume**, so it is not lost after `docker compose down`.
 - [ ] Postgres has a **healthcheck**.
-- [ ] `order-service` builds from `./order-service`, publishes port `8080`, and gets `DATABASE_URL` via environment.
-- [ ] `order-service` waits until Postgres is **healthy** (not just started).
-- [ ] `curl http://localhost:8080/health` returns `200`.
-- [ ] `POST /orders` then `GET /orders/:id` returns the same order.
-- [ ] I can answer: why is the DB host in `DATABASE_URL` not `localhost`? When does the init script run — every start or only once? What's the difference between "container started" and "container healthy"?
+- [ ] An `order-service` service: builds from `./order-service`, publishes port `8080`, and gets `DATABASE_URL` as an env var.
+- [ ] `order-service` waits until Postgres is **healthy** (ready to work), not only **started**.
+- [ ] `curl.exe http://localhost:8080/health` returns `200`.
+- [ ] `POST /orders`, then `GET /orders/:id` returns the same order.
+- [ ] I can answer: Why is the DB host not `localhost`? Does the init script run on every start, or only once?
+  What is the difference between "started" and "healthy"?
 
 <details>
 <summary>Hint 1</summary>
 
 - Postgres image env vars: `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`.
-- The image runs any `.sql` file in `/docker-entrypoint-initdb.d/` — but **only when the data directory is empty**.
-- Healthcheck tool shipped with Postgres: `pg_isready`.
-- Waiting for healthy: `depends_on` with `condition: service_healthy`.
-- In Compose, every service is reachable from the others by its **service name** (Compose runs a DNS for you).
+- The image runs every `.sql` file in `/docker-entrypoint-initdb.d/` — but **only if the data folder is empty** (first start).
+- Postgres has a tool to check if it is ready: `pg_isready`.
+- Wait for healthy: `depends_on` with `condition: service_healthy`.
+- In Compose, each service can reach the others by **service name**.
 - URL format: `postgres://USER:PASSWORD@HOST:5432/DBNAME?sslmode=disable`
 </details>
 
 <details>
 <summary>Hint 2</summary>
 
-Skeleton (fill in the blanks):
+Fill in the blanks:
 
 ```yaml
 services:
@@ -241,7 +259,7 @@ volumes:
   ____:
 ```
 
-Test commands (PowerShell — use `curl.exe`, not `curl`):
+Test commands (in PowerShell use `curl.exe`, not `curl`):
 
 ```powershell
 curl.exe -i http://localhost:8080/health
@@ -252,35 +270,37 @@ curl.exe -i http://localhost:8080/orders/<id-from-above>
 
 ---
 
-## DS-6 — Experiment: database outage
+## DS-6 — Experiment: stop the database
 
-**Type:** Spike · **Assignee:** 👤 Me · **Status:** 🔲 To Do · **Blocked by:** DS-5
+**Type:** Spike · **Who:** 👤 Me · **Status:** 🔲 To Do · **Needs:** DS-5
 
 **Description**
-Deliberately break the database and observe how the service behaves. Write findings in `notes/step1.md`.
+Break the database on purpose and watch what the service does.
+Write what you see in `notes/step1.md`.
 
 **Acceptance criteria**
-- [ ] With everything running, stop only Postgres: `docker compose stop postgres`.
-- [ ] Record: what do `GET /health`, `POST /orders`, `GET /orders/:id` return? (status code + body)
-- [ ] Record: what do the Order Service logs say? (`docker compose logs -f order-service`)
-- [ ] How long does a request take while the DB is down? Why that long? (Hint: look for a timeout in `handler.go`.)
-- [ ] Start Postgres again: `docker compose start postgres`. Without restarting the service — does it recover? Why?
-- [ ] Bonus: stop Postgres, then restart **the Order Service**. What happens now, and why is it different?
-- [ ] Bonus: `docker compose down` then `up` — is the data still there? Now `down -v` then `up` — what changed?
+- [ ] Everything is running. Stop only Postgres: `docker compose stop postgres`.
+- [ ] Write down: what do `GET /health`, `POST /orders` and `GET /orders/:id` return? (status code + body)
+- [ ] Write down: what do the service logs say? (`docker compose logs -f order-service`)
+- [ ] How long does one request take while the DB is down? Why this long? (Look for a timeout in `handler.go`.)
+- [ ] Start Postgres again: `docker compose start postgres`. Do **not** restart the service. Does it work again by itself? Why?
+- [ ] Bonus: stop Postgres, then restart the **Order Service**. What happens? Why is it different?
+- [ ] Bonus: `docker compose down`, then `up`. Is the data still there? Now `down -v`, then `up`. What changed?
 
 <details>
 <summary>Hint 1</summary>
 
-- Use `curl.exe -w "%{time_total}\n"` to measure request time.
-- The pool in `pgxpool` creates connections **on demand**. Think about what that means once Postgres is back.
-- On startup, `main.go` pings the DB and exits if it fails — compare that with the "DB dies while running" case.
+- Measure the time of a request: `curl.exe -w "%{time_total}\n" ...`
+- `pgxpool` opens connections **when they are needed**. What does this mean when Postgres comes back?
+- At start, `main.go` checks the DB and stops if it fails. Compare this with "the DB stops while the service is running".
 </details>
 
 ---
 
 ## Definition of Done (Step 1)
 
-- [ ] DS-1 … DS-6 all done; Claude verified DS-3 → DS-5 from the terminal.
+- [ ] DS-1 … DS-6 are done. Claude checked DS-3, DS-4 and DS-5 in the terminal.
 - [ ] `notes/step1.md` has my experiment results.
-- [ ] I can explain without looking: request → handler → DB → response; what a connection pool is and why it exists; why multi-stage builds make images smaller; how containers find each other by name in Compose.
-- [ ] Committed and pushed.
+- [ ] I can explain without looking: request → handler → DB → response; what a connection pool is and why we need it;
+  why multi-stage builds make images smaller; how containers find each other by name in Compose.
+- [ ] Committed and pushed to git.

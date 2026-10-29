@@ -12,6 +12,36 @@
 
 ---
 
+## 0. Concept first, tool second (most important part)
+
+**Tools change. Concepts stay.**
+You may forget the name `pgxpool` in one year. That is OK.
+But you must remember **why** a pool exists. The concept is the root. The tool is only one way to do it.
+
+When you learn a new tool, always ask:
+
+1. **What problem does it solve?**
+2. **What is the general idea (the concept) behind it?**
+3. **How would it look in another language or tool?**
+
+If you can answer these, you can learn any new tool fast.
+
+| Tool we use (can forget) | Concept behind it (must remember) | Same concept in other places |
+|---|---|---|
+| `pgx` | **Database driver** — speaks the DB network protocol | JDBC (Java), `psycopg` (Python), `pg` (Node.js) |
+| `pgxpool` | **Connection pooling** — reuse open connections, because opening one is slow | HikariCP (Java), PgBouncer, HTTP keep-alive |
+| `$1, $2` | **Parameterized queries** — send SQL and values separately → no SQL injection | `?` in MySQL/JDBC, `%s` in psycopg |
+| `DATABASE_URL` | **Config from the environment** — no settings or secrets in code | 12-Factor App, Kubernetes ConfigMap/Secret |
+| `sslmode` | **Encryption in transit (TLS)** — nobody on the network can read the data | HTTPS for websites |
+| `context` with timeout | **Timeouts** — never wait forever for another system | timeouts in every HTTP client and DB client |
+| `repository.go` | **Separation of layers** — only one place knows about SQL | Repository pattern in any language |
+| `POSTGRES_USER` superuser | **Least privilege** — give only the rights that are needed | IAM roles in the cloud, Linux users |
+
+**In interviews**, people ask about concepts much more than about tools.
+"How does a connection pool work?" is a common question. "What is the API of pgxpool?" is not.
+
+---
+
 ## 1. The big picture
 
 ```
@@ -125,7 +155,7 @@ can't connect, and you see an error like `password authentication failed for use
    `docker-compose.yml` is OK. Better: put it in a `.env` file. Compose reads `.env`
    automatically, and our `.gitignore` already ignores `.env`.
 3. **Never use `POSTGRES_HOST_AUTH_METHOD=trust`.** It turns off the password check completely.
-4. In Kubernetes (Step 6), passwords go into a **Secret**.
+4. In AWS (Step 5), passwords go into **SSM Parameter Store**. In Kubernetes (Step 8), they go into a **Secret**.
 
 **Two more safety points (good for interviews):**
 
@@ -141,7 +171,7 @@ can't connect, and you see an error like `password authentication failed for use
 **Encryption (`sslmode`):**
 `sslmode=disable` means the data (and the password!) travels without encryption.
 This is OK on your laptop, because the traffic never leaves your computer.
-In the cloud, use `sslmode=require` or, better, `sslmode=verify-full`.
+In the cloud (RDS in Step 5), use `sslmode=require` or, better, `sslmode=verify-full`.
 
 ---
 
@@ -172,7 +202,7 @@ for example `...?sslmode=disable&pool_max_conns=10`.
 
 Postgres also has a limit: `max_connections` = 100 by default.
 So if you run 5 copies of the service, each with 30 connections, that is 150 → too many!
-Remember this for Step 6 (Kubernetes), when we start more copies.
+Remember this for Step 8 (Kubernetes), when we start more copies.
 
 **What if Postgres goes down and comes back?** Try it in DS-6 before you read about it. 😉
 

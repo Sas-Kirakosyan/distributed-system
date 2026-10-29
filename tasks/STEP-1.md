@@ -85,6 +85,53 @@ Postgres will run this script by itself on the first start (you connect it in DS
 
 **File:** `order-service/db/init.sql`
 
+### What is `init.sql`?
+
+- It is a **normal text file with SQL commands**. Nothing special inside.
+- The name `init.sql` is only a habit. Postgres does not need this exact name.
+- The **official Postgres Docker image** has a special folder: `/docker-entrypoint-initdb.d/`.
+- When the container starts **for the first time** (the data folder is empty), Postgres:
+  1. creates the user and the database (from `POSTGRES_USER`, `POSTGRES_DB`),
+  2. runs **every** `.sql` file in that folder, in name order (`01-...`, `02-...`),
+  3. then starts normally.
+- On the **next** starts, the data already exists, so the scripts **do not run again**.
+- So `init.sql` is "the first setup of the database". In DS-5 you put the file into that folder.
+
+```
+first start:   empty data folder → create user + DB → run init.sql → ready
+next starts:   data folder has data → skip init.sql → ready
+```
+
+### Steps to do
+
+1. Create the folder `order-service/db/`.
+2. Create the file `order-service/db/init.sql`.
+3. Write one `CREATE TABLE` command. Go row by row through the table below: one column = one line.
+4. **Test the file alone** (no compose yet). Run these in PowerShell from the project root folder:
+   ```powershell
+   # start a temporary Postgres (wait ~5 seconds after this)
+   docker run -d --name pg-test -e POSTGRES_PASSWORD=test postgres:17
+
+   # run your script
+   Get-Content order-service/db/init.sql | docker exec -i pg-test psql -U postgres
+
+   # run it a second time — it must NOT fail
+   Get-Content order-service/db/init.sql | docker exec -i pg-test psql -U postgres
+
+   # look at the table
+   docker exec -it pg-test psql -U postgres -c "\d orders"
+   ```
+5. **Test the rules.** Try to insert a bad row. It must fail:
+   ```powershell
+   docker exec -it pg-test psql -U postgres -c "INSERT INTO orders (user_id, amount, status) VALUES ('u1', -5, 'PENDING');"
+   ```
+   Then insert a good row (`amount` = 1999) and check that `id` and `created_at` are filled by themselves:
+   ```powershell
+   docker exec -it pg-test psql -U postgres -c "SELECT * FROM orders;"
+   ```
+6. Clean up: `docker rm -f pg-test`
+7. Tell Claude → Claude checks it.
+
 **Acceptance criteria**
 - [ ] The table looks **exactly** like this (the Go code needs these names and types):
 
@@ -139,6 +186,57 @@ Use a **multi-stage build**, which means two stages:
 2. **Run stage:** a very small image. It has **only** the binary — no Go tools, no source code.
 
 **Files:** `order-service/Dockerfile` and `order-service/.dockerignore`
+
+### Words you need
+
+| Word | Meaning |
+|---|---|
+| **Dockerfile** | A recipe. Each line is one step to build an image. |
+| **Image** | The result of the recipe. A packed file system + the command to start. |
+| **Container** | A running image. You can start many containers from one image. |
+| **Layer** | Each step in the Dockerfile makes one layer. Docker **saves** (caches) layers and reuses them if nothing changed. |
+| **Build context** | The folder you send to Docker when you build (here: `./order-service`). |
+| **`.dockerignore`** | Like `.gitignore`, but for the build context. Files in it are not sent to Docker. |
+
+**Why two stages?** The `golang` image is big (~800 MB). It has the compiler, tools and source code.
+To *run* the program, you only need the one binary file (~15 MB). So: build in a big image, copy only the binary into a tiny image, and throw away the big one.
+
+### Steps to do
+
+1. Create the file `order-service/Dockerfile` (no file extension).
+2. Write the **build stage**, in this order:
+   1. `FROM` the golang image, and give the stage a name.
+   2. `WORKDIR` — choose a folder inside the image.
+   3. `COPY` only `go.mod` and `go.sum`.
+   4. `RUN go mod download`.
+   5. `COPY` the rest of the code.
+   6. `RUN go build ...` with `CGO_ENABLED=0 GOOS=linux`.
+3. Write the **run stage**:
+   1. A second `FROM` with a tiny image.
+   2. `COPY --from=<build stage>` — only the binary.
+   3. `USER` — a non-root user.
+   4. `EXPOSE 8080`.
+   5. `ENTRYPOINT` — start the binary.
+4. Create `order-service/.dockerignore`. Think: which files does the Go build **not** need?
+5. **Build** it (from the project root folder):
+   ```powershell
+   docker build -t order-service ./order-service
+   ```
+6. **Run it alone** (no database):
+   ```powershell
+   docker run --rm order-service
+   ```
+   ✅ Expected: it stops with the error `DATABASE_URL is required`.
+   This is **good**! It shows the binary starts and reads the config. (The database comes in DS-5.)
+7. **Compare sizes:**
+   ```powershell
+   docker pull golang:1.27
+   docker images
+   ```
+   Write down the size of `order-service` and of `golang`.
+8. **See the cache work:** change only a comment in `main.go`, then build again.
+   Look at the output: which steps say `CACHED`? Is `go mod download` cached? Why?
+9. Tell Claude → Claude checks it.
 
 **Acceptance criteria**
 - [ ] The build stage uses an official `golang` image with the same version as `go.mod` (1.27). The stage has a name (for example `AS build`).
@@ -199,6 +297,71 @@ The table is created by itself. The service finds Postgres by its **service name
 📖 Read [docs/database.md](../docs/database.md) sections 3 and 4 first (connection URL and login).
 
 **File:** `docker-compose.yml` (in the project root folder)
+
+### Words you need
+
+| Word | Meaning |
+|---|---|
+| **Docker Compose** | A tool to start **many containers together** from one YAML file. |
+| **Service** | One container in the compose file (here: `postgres` and `order-service`). |
+| **Network** | Compose puts all services in one private network. They find each other **by service name**. |
+| **Named volume** | A storage place managed by Docker. It lives **outside** the container, so data is not lost when the container is deleted. |
+| **Bind mount** | A file or folder from **your computer**, shown inside the container (we use it for `init.sql`). |
+| **Healthcheck** | A command Docker runs again and again to ask "are you ready?". The answer is `healthy` or `unhealthy`. |
+| **`depends_on`** | "Start this service after that one." With `condition: service_healthy` → "after that one is **ready**". |
+
+```
+your computer
+  │  localhost:8080
+  ▼
+┌──────────── compose network ────────────┐
+│  order-service  ──postgres:5432──►  postgres  │
+│                                     │    │
+└─────────────────────────────────────┼────┘
+                                      ▼
+                              named volume (data)
+```
+
+### Steps to do
+
+1. Create `docker-compose.yml` in the project root folder.
+2. Add the **`postgres` service**:
+   1. `image` — the official Postgres image.
+   2. `environment` — user, password, database name. Choose simple values and **write them down**. You need them again in step 4.
+   3. `volumes` — two lines: the named volume for data, and your `init.sql` file into `/docker-entrypoint-initdb.d/`.
+   4. `healthcheck` — use `pg_isready`.
+3. Add the **`volumes:`** section at the bottom (the top level of the file), and name your volume.
+4. Add the **`order-service` service**:
+   1. `build` — the folder with the Dockerfile.
+   2. `ports` — make `8080` reachable from your computer.
+   3. `environment` — `DATABASE_URL`. Use the same user / password / DB name as in step 2. The host is the **service name**.
+   4. `depends_on` — wait for Postgres to be **healthy**.
+5. **Start everything:**
+   ```powershell
+   docker compose up --build -d
+   docker compose ps
+   ```
+   ✅ Expected: `postgres` is `healthy`, and `order-service` is `running`.
+6. **Read the logs:**
+   ```powershell
+   docker compose logs order-service
+   ```
+   ✅ Expected: `connected to database` and `listening`.
+7. **Test the API:**
+   ```powershell
+   curl.exe -i http://localhost:8080/health
+   curl.exe -i -X POST http://localhost:8080/orders -H "Content-Type: application/json" -d '{\"user_id\":\"u1\",\"amount\":1999}'
+   curl.exe -i http://localhost:8080/orders/<id-from-above>
+   ```
+8. **Test bad input:** send `amount: -5`, and a wrong id like `/orders/abc`. Which status codes do you get?
+9. Stop everything: `docker compose down` (the data stays in the volume).
+10. Tell Claude → Claude checks it.
+
+**If something goes wrong:**
+- `password authentication failed` → user/password in `DATABASE_URL` and in `postgres` are different.
+- `relation "orders" does not exist` → `init.sql` did not run. Maybe the volume already had data from an earlier try.
+  Run `docker compose down -v` (⚠️ this deletes the data) and start again.
+- `connection refused` → wrong host or port in `DATABASE_URL`.
 
 **Acceptance criteria**
 - [ ] A `postgres` service: official image (for example `postgres:17`), with user, password and database name set by env vars.

@@ -1,6 +1,6 @@
-# Learning Plan: DevOps with a Small Orders & Payments System
+# Learning Plan: DevOps and Cloud Engineering with a Small Orders & Payments System
 
-**Main goal:** learn **DevOps skills** by doing them by hand:
+**Main goal:** learn **DevOps and cloud engineering skills** by doing them by hand:
 Linux, Docker, CI/CD, AWS, Terraform, monitoring and Kubernetes.
 
 The Go app is **small on purpose**. It is only "the thing we deploy".
@@ -9,6 +9,9 @@ The real work is everything around it: **build it, ship it, run it, watch it, fi
 **Target:** a project I can show and explain in a **DevOps / Cloud / Platform engineer** interview.
 
 **Pace:** ~1 hour per day. Time estimates are rough; understanding beats speed.
+
+**Courses:** I take KodeKloud courses next to this plan. I start each course when its matching step starts
+(Docker → Step 1, Terraform → Step 4, Kubernetes → Step 8), not before.
 
 **Rule for every step:** It's done when I can answer these without looking:
 
@@ -19,19 +22,33 @@ The real work is everything around it: **build it, ship it, run it, watch it, fi
 
 ---
 
+## Two similar roles
+
+I want a job as a **Cloud engineer** or a **DevOps engineer**. Many companies mix these two jobs. This plan prepares me for both.
+
+| | DevOps engineer | Cloud engineer |
+|---|---|---|
+| **Main question** | How does code reach users safely and quickly? | How do we build a cloud platform that is safe, reliable and not too expensive? |
+| **Main work** | CI/CD, containers, monitoring, deploys | networks, IAM, managed services, high availability, cost |
+| **Steps with the most practice** | 1, 2, 5, 6, 8 | 3, 4, 5, 5b, 7 |
+| **Both need** | Linux, networking, AWS, Terraform, security, finding and fixing problems | same |
+
+---
+
 ## Skills map
 
 **Concept first, tool second.** Tools change. Concepts stay.
 
 | Area | Concept (must remember) | Tools we use (can change) | Steps |
 |---|---|---|---|
-| **Linux** | files, permissions, users, processes, ports, services, logs | bash, ssh, systemd, journalctl | all steps (most in 1 and 3) |
+| **Linux** | files, permissions, users, processes, ports, services, logs | bash, ssh, systemd, journalctl, cron | all steps (most in 1 and 3) |
 | **Containers** | pack an app with everything it needs; a container is a Linux process | Docker, Compose | 1 |
 | **CI** | every push is tested and built by a machine, not by hand | GitHub Actions | 2 |
 | **Cloud** | rent servers, networks and managed services; pay per hour | AWS (IAM, EC2, VPC, ECR, RDS, CloudWatch) | 3, 5 |
+| **High availability** | no single point of failure; broken servers are replaced by themselves; backups are tested | AWS load balancer (ALB), Auto Scaling, RDS backups | 5b |
 | **Infrastructure as Code (IaC)** | infra is written in files, reviewed in git, and rebuilt with one command | Terraform | 4 and after |
 | **CD** | deploys are automatic, repeatable, and easy to roll back | GitHub Actions + AWS | 5 |
-| **Security** | least privilege, no secrets in code, short-lived credentials | IAM roles, OIDC, SSM Parameter Store | 3–5 |
+| **Security** | least privilege, no secrets in code, short-lived credentials | IAM roles, OIDC, SSM (Parameter Store, Run Command) | 3–5 |
 | **Observability** | metrics, logs, alerts: see the problem before users tell you | Prometheus, Grafana, CloudWatch, k6 | 6 |
 | **Distributed systems** | services fail separately; async messages; idempotency | SQS (Kafka is the same idea) | 7 |
 | **Orchestration** | you describe the wanted state; the system keeps it by itself | Kubernetes, Helm | 8 |
@@ -48,7 +65,7 @@ The real work is everything around it: **build it, ship it, run it, watch it, fi
 | **GitHub Actions, AWS, Terraform** | **Me** | Same: task + hints. |
 | **Prometheus / Grafana / k6 / Kubernetes / Helm config** | **Me** | Same: task + hints. |
 | **Running experiments** | **Me** | I break things and write down what I saw. |
-| **Testing & verification** | Claude | Checks my work via the terminal and tells me what's wrong — and why. |
+| **Review & verification** | Claude | Reviews what I push or paste (code, configs, terminal output) and tells me what's wrong — and why. |
 
 Tasks marked 👤 are mine. Tasks marked 🤖 are Claude's. 🐧 = Linux practice.
 
@@ -57,6 +74,9 @@ short sentences, common words, one idea per sentence. Explain technical words th
 
 **Terminal rule:** From now on, I work in the **Ubuntu (WSL) terminal**, not in PowerShell.
 Real servers run Linux. Every command I type there is practice.
+
+**Experiment notes:** After every experiment, I write 2–3 lines: what I did, what I saw, why.
+These notes become my interview stories ("tell me about a time something broke").
 
 📚 **Docs:**
 - [docs/database.md](docs/database.md) — how the service connects to Postgres (no ORM, connection pool, login, security)
@@ -89,6 +109,7 @@ The cloud costs **real money**. A forgotten server costs money **every hour**, e
 **New concept:** containers, and the Linux command line.
 
 - [x] Set up WSL2 + Docker Desktop.
+- [ ] Install Ubuntu in WSL and connect it to Docker Desktop.
 - [x] 🤖 Order Service in Go (Gin): `POST /orders` and `GET /orders/:id`.
 - [ ] PostgreSQL with an `orders` table (`id`, `user_id`, `amount`, `status`, `created_at`), created by a plain SQL init script.
 - [x] 🤖 Connect with `pgxpool`; read config (DB URL, port) from environment variables.
@@ -114,23 +135,24 @@ The cloud costs **real money**. A forgotten server costs money **every hour**, e
 
 - [ ] Stop Postgres while the service runs. What does the API return? What do the logs say?
 - [ ] Restart Postgres. Does the service recover on its own?
+- [ ] Run `docker compose down`, then `docker compose down -v`. Is my order data still there after each one? Why? (Container vs volume.)
 
 📋 **Tickets with acceptance criteria and hints: [tasks/STEP-1.md](tasks/STEP-1.md)**
 
 **Done when I can explain:** request → handler → DB → response; what a connection pool is and why it exists;
 why multi-stage builds make images smaller; how containers find each other by name in Compose;
 **a container is just a Linux process** with its own view of files, network and other processes;
-what an exit code is and why scripts need it.
+where container data lives (volumes); what an exit code is and why scripts need it.
 
 > **Interview talking point:** "I containerized a Go service with Postgres, configured it via environment variables, wrote a smoke-test script, and tested what happens when the database goes down."
 
 ---
 
-## Step 2 — CI: test and build on every push (~1 week)
+## Step 2 — CI: test and build on every push (~2 weeks)
 
 **New concept:** Continuous Integration — a machine checks every change, not me.
 
-- [ ] Push the repo to GitHub.
+- [x] Push the repo to GitHub.
 - [ ] 🤖 A few Go tests (`go test ./...`).
 - [ ] GitHub Actions workflow on every push and pull request: `go vet`, `go test`, lint, `docker build`.
 - [ ] Cache Go modules and Docker layers, so the pipeline is fast.
@@ -193,6 +215,7 @@ why SSH is open only to my IP; "connection refused" vs "timeout"; what systemd d
 
 - [ ] Install Terraform. Learn the loop: `init` → `fmt` → `validate` → `plan` → `apply` → `destroy`.
 - [ ] Build Step 3 again, in code: VPC, public subnet, internet gateway, route table, security group, key pair, EC2.
+- [ ] Add two **private subnets** in two different AZs. (RDS in Step 5 needs subnets in at least two AZs.)
 - [ ] A `user_data` script (cloud-init) installs Docker and starts the app when the server boots. No SSH needed.
 - [ ] Variables and outputs (for example, print the public IP at the end).
 - [ ] **Remote state** in an S3 bucket, with locking. Why must the state not live only on my laptop?
@@ -212,31 +235,67 @@ why we always read `plan` before `apply`; what drift is; why remote state needs 
 
 ---
 
-## Step 5 — Managed AWS services + automatic deploy (CD) (~2–3 weeks)
+## Step 5 — Managed AWS services + automatic deploy (CD) (~3–4 weeks)
 
 **New concept:** managed services, secrets, and Continuous Delivery.
 
 All of this is in **Terraform**, not clicked by hand.
 
 - [ ] **ECR:** a private image registry in AWS. CI pushes images there.
-- [ ] **RDS Postgres** instead of the Postgres container. Smallest size, in a **private** subnet.
+- [ ] **RDS Postgres** instead of the Postgres container. Smallest size, in the **private** subnets from Step 4.
   Only the app's security group can reach port 5432. Connect with `sslmode=require`.
 - [ ] The DB password lives in **SSM Parameter Store** (SecureString). Not in code, not in git, not in Terraform files.
-- [ ] The EC2 server gets an **IAM role**, so it can pull images and read the secret. No access keys on the server.
+- [ ] The password must also stay out of the **Terraform state** (for example, use a write-only password field). Open the state file and check.
+- [ ] The EC2 server gets an **IAM role**, so it can pull images, read the secret and receive SSM commands. No access keys on the server.
 - [ ] App logs go to **CloudWatch Logs**.
 - [ ] **CD:** on push to `main`, GitHub Actions deploys the new image.
   It logs in to AWS with **OIDC** — no long-lived AWS keys in GitHub.
-- [ ] Deploy flow: build → push to ECR → update the server → run `smoke-test.sh` → if it fails, **roll back** to the last good tag.
+- [ ] GitHub's machines cannot reach ports 22 or 8080, because these are open only to my IP. So CD talks to the server with
+  **SSM Run Command**, which runs commands on the server with no open port.
+- [ ] Deploy flow: build → push to ECR → update the server with SSM → run `smoke-test.sh` on the server with SSM → if it fails, **roll back** to the last good tag.
 
 **Experiments:**
 
 - [ ] Deploy a broken version (for example `/health` returns 500). Does the pipeline stop it? Does the rollback work?
 - [ ] Run `curl` in a loop during a deploy. How many requests fail? (This is the **downtime**.)
+- [ ] Rotate the database password by hand in SSM and RDS. Watch the app logs. Do old connections still work?
+  Do new ones fail? What do I need to do so the app uses the new password? (Expect it to break first — that is the lesson.)
 
 **Done when I can explain:** self-managed vs managed (who does backups and updates?);
-IAM role vs access keys; what OIDC gives us; why the DB is in a private subnet; how my rollback works.
+IAM role vs access keys; what OIDC gives us; why CD uses SSM and not SSH; why the DB is in a private subnet; how my rollback works;
+what happens to a running app when a secret changes.
 
 > **Interview talking point:** "Deploys are automatic: GitHub Actions authenticates to AWS with OIDC, pushes to ECR, deploys, runs a smoke test and rolls back on failure. No static AWS keys anywhere."
+
+---
+
+## Step 5b — High availability: no single point of failure (~2 weeks)
+
+**New concept:** high availability — if one server dies, users do not notice.
+
+All of this is in **Terraform**. A load balancer costs money every hour, so I run `terraform destroy` at the end of every session.
+
+- [ ] Learn the word **stateless**: the app keeps no data on the server, so any server can answer any request. (The data is in RDS.)
+- [ ] 🤖 A `/live` endpoint with no database check.
+- [ ] Add a second public subnet in another AZ. A load balancer needs at least two AZs.
+- [ ] An **Application Load Balancer (ALB)** in front of the app. Its health check uses `/live`.
+- [ ] Security groups: users reach only the ALB. Only the ALB can reach port 8080 on the servers.
+- [ ] An **Auto Scaling group** with a launch template: at least 2 servers, in two AZs. New servers set themselves up with `user_data`.
+- [ ] Deploy by replacing the servers little by little (instance refresh).
+- [ ] RDS automatic backups are on.
+- [ ] *Optional:* HTTPS with a free AWS certificate (ACM) and a domain name in Route 53. (A domain costs money each year.)
+
+**Experiments:**
+
+- [ ] Terminate one server by hand while `curl` runs in a loop. How many requests fail? How long until a new server is ready?
+- [ ] Set the ALB health check to `/health`, then make the database unreachable. What happens to the servers? Why is `/live` better here?
+- [ ] Run `curl` in a loop during a deploy. Compare the failed requests with the Step 5 result.
+- [ ] Restore the database from a backup into a new RDS instance. Is my order data there? How long did it take? (A backup you never tested is only a hope.)
+
+**Done when I can explain:** stateless vs stateful; what a load balancer does; what a health check does; how Auto Scaling replaces a broken server;
+why the app servers do not need public access; RTO and RPO (how fast I must recover, and how much data I can lose).
+
+> **Interview talking point:** "I removed the single point of failure with an ALB and an Auto Scaling group in two AZs. I terminated a server during traffic and measured the failed requests. I also restored the database from a backup and measured the time."
 
 ---
 
@@ -244,12 +303,16 @@ IAM role vs access keys; what OIDC gives us; why the DB is in a private subnet; 
 
 **New concept:** measuring a system, and alerts.
 
+**Where things run:** Prometheus, Grafana and k6 run locally in Compose (free). In AWS I use CloudWatch for logs and alarms.
+
 - [ ] 🤖 Prometheus metrics in the service (`/metrics`): request count, error count, latency histogram.
 - [ ] 🤖 Structured (JSON) logs. Search them with `jq` locally and with CloudWatch Logs Insights in AWS.
-- [ ] Prometheus + Grafana in Compose; build one simple dashboard.
-- [ ] A **CloudWatch alarm** (for example: health check fails, or CPU is high) that sends me an email.
+- [ ] Prometheus + Grafana in local Compose; build one simple dashboard.
+- [ ] 🐧 A small `cron` script on the server: it calls `/health` and sends the result to CloudWatch as a custom metric.
+  (CloudWatch cannot call `/health` by itself. The EC2 role needs permission to send metrics.)
+- [ ] A **CloudWatch alarm** on this metric sends me an email. It fires if the check fails or if no data comes.
 - [ ] Write a k6 script for `POST /orders`: ramp up, hold, ramp down.
-- [ ] Run it, find the first bottleneck, change one thing, run again, compare.
+- [ ] Run it locally, find the first bottleneck, change one thing, run again, compare.
 
 **Done when I can explain:** p50 vs p95 vs p99 latency and why averages lie; metrics vs logs vs traces;
 what a good alert is (it fires on things users feel); what the bottleneck was and how I proved it.
@@ -274,7 +337,10 @@ what a good alert is (it fires on things users feel); what the bottleneck was an
 - [ ] Async version: stop Payment Service, create 10 orders, start it again. What happens? Compare.
 - [ ] Make Payment Service crash after the payment but before it deletes the message. Is the order paid twice?
   Fix it: make the consumer **idempotent**.
-- [ ] Send a "bad" message that always fails. Where does it go?
+- [ ] Send a "bad" message that always fails. Watch it go to the DLQ. Fix the bug, then move the message back
+  to the main queue with **SQS redrive**.
+- [ ] Save an order, then make sending the message fail. The order exists, but no message was sent.
+  (This is the **dual-write problem**.)
 
 **Done when I can explain:** sync vs async trade-offs; why timeouts are mandatory; at-least-once delivery
 and why duplicates happen; idempotency; what a DLQ is for; the dual-write problem (and that the outbox pattern fixes it).
@@ -290,14 +356,22 @@ SQS and Kafka use the same ideas — I can explain the differences in simple wor
 
 - [ ] Local cluster first (kind or minikube). It is free.
 - [ ] Deployments + Services for both services. ConfigMaps and Secrets for config.
-- [ ] Readiness and liveness probes (using `/health`). Resource requests and limits.
+- [ ] 🤖 A simple way to make the probes fail for the experiments.
+- [ ] Readiness probe on `/health` (checks the database). Liveness probe on `/live` from Step 5b (does not).
+  Why? If liveness checks the database, a database outage restarts every Pod, and restarting does not fix the database.
+- [ ] Resource requests and limits.
 - [ ] Rolling update, then `kubectl rollout undo`.
 - [ ] Scale Payment Service to 3 replicas.
 - [ ] Package the app as a **Helm** chart.
 - [ ] *Optional:* create EKS with Terraform, deploy, look around for one session, then **destroy it the same day** (it costs money every hour).
 
+**Experiments:**
+
+- [ ] Make the liveness probe fail after 30 seconds. Watch Kubernetes kill and restart the Pod.
+- [ ] Make the readiness probe fail. Watch the Pod stop getting traffic, but not restart. Compare with the liveness experiment.
+
 **Done when I can explain:** Pod vs Deployment vs Service; desired state vs current state;
-why probes matter for zero-downtime deploys; what requests and limits do; Docker Compose vs Kubernetes.
+liveness vs readiness probes and why they matter for zero-downtime deploys; what requests and limits do; Docker Compose vs Kubernetes.
 
 > **Interview talking point:** "I moved the services from Compose to Kubernetes with probes, resource limits and a Helm chart, and practiced rolling updates and rollbacks."
 

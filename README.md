@@ -109,7 +109,7 @@ The cloud costs **real money**. A forgotten server costs money **every hour**, e
 **New concept:** containers, and the Linux command line.
 
 - [x] Set up WSL2 + Docker Desktop.
-- [ ] Install Ubuntu in WSL and connect it to Docker Desktop.
+- [x] Install Ubuntu in WSL and connect it to Docker Desktop.
 - [x] 🤖 Order Service in Go (Gin): `POST /orders` and `GET /orders/:id`.
 - [ ] PostgreSQL with an `orders` table (`id`, `user_id`, `amount`, `status`, `created_at`), created by a plain SQL init script.
 - [x] 🤖 Connect with `pgxpool`; read config (DB URL, port) from environment variables.
@@ -120,8 +120,8 @@ The cloud costs **real money**. A forgotten server costs money **every hour**, e
 
 **🐧 Linux practice** (in the Ubuntu WSL terminal):
 
-- [ ] Move around and work with files: `pwd`, `ls -la`, `cd`, `mkdir -p`, `cat`, `less`, `cp`, `mv`, `rm`.
-- [ ] Search: find every place that uses `DATABASE_URL` with `grep -rn`. Find all `.go` files with `find`.
+- [x] Move around and work with files: `pwd`, `ls -la`, `cd`, `mkdir -p`, `cat`, `less`, `cp`, `mv`, `rm`.
+- [x] Search: find every place that uses `DATABASE_URL` with `grep -rn`. Find all `.go` files with `find`.
 - [ ] Environment variables: `env`, `export`, `echo $HOME`. Run the service with `DATABASE_URL=... go run .`
 - [ ] Processes and ports: `ps aux`, `top`, `ss -tlnp`. Which program listens on port 8080?
 - [ ] Permissions: what does `rwxr-xr-x` mean? Use `chmod +x`. Why must a container not run as `root`?

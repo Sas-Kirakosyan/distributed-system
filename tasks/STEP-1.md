@@ -7,13 +7,13 @@ I can create an order and read it over HTTP. I know what happens when the databa
 | Key  | Title                             | Type  | Who       | Status                     |
 | ---- | --------------------------------- | ----- | --------- | -------------------------- |
 | DS-1 | Install WSL2 + Docker Desktop     | Task  | 👤 Me     | ✅ Done                    |
-| DS-2 | Order Service Go code             | Story | 🤖 Claude | ✅ Done (I must review it) |
+| DS-2 | Order Service Go code             | Story | 🤖 Claude | ✅ Done                    |
 | DS-3 | SQL script for the `orders` table | Task  | 👤 Me     | 🔲 To Do                   |
 | DS-4 | Multi-stage Dockerfile            | Task  | 👤 Me     | 🔲 To Do                   |
 | DS-5 | `docker-compose.yml`              | Task  | 👤 Me     | 🔲 To Do                   |
 | DS-6 | Experiment: stop the database     | Spike | 👤 Me     | 🔲 To Do                   |
-| DS-7 | Install Ubuntu in WSL             | Task  | 👤 Me     | 🔲 To Do                   |
-| DS-8 | Linux: files and search           | Task  | 👤 Me     | 🔲 To Do                   |
+| DS-7 | Install Ubuntu in WSL             | Task  | 👤 Me     | ✅ Done                    |
+| DS-8 | Linux: files and search           | Task  | 👤 Me     | ✅ Done                    |
 | DS-9 | Experiment: container vs volume   | Spike | 👤 Me     | 🔲 To Do                   |
 | DS-10 | Linux: env, processes and ports  | Task  | 👤 Me     | 🔲 To Do                   |
 | DS-11 | Linux: permissions and pipes     | Task  | 👤 Me     | 🔲 To Do                   |
@@ -44,7 +44,7 @@ Checked: WSL 2, Docker 29.7.2, Compose v5.3.1, Go 1.27.1. The `hello-world` cont
 
 ## DS-2 — Order Service Go code
 
-**Type:** Story · **Who:** 🤖 Claude writes, 👤 I review · **Status:** ✅ Done (I must review it)
+**Type:** Story · **Who:** 🤖 Claude writes, 👤 I review · **Status:** ✅ Done
 
 **Story**
 As a client, I want to create an order and get it by its id over HTTP.
@@ -484,7 +484,7 @@ Write what you see in `notes/step1.md`.
 
 ## DS-7 — Install Ubuntu in WSL
 
-**Type:** Task · **Who:** 👤 Me · **Status:** 🔲 To Do
+**Type:** Task · **Who:** 👤 Me · **Status:** ✅ Done
 
 **Description**
 WSL2 works, but `wsl -l -v` shows only `docker-desktop`. This is Docker's own small Linux. It is not for daily work.
@@ -533,7 +533,7 @@ source ~/.bashrc
 
 ## DS-8 — Linux: files and search
 
-**Type:** Task · **Who:** 👤 Me · **Status:** 🔲 To Do · **Needs:** DS-7
+**Type:** Task · **Who:** 👤 Me · **Status:** ✅ Done · **Needs:** DS-7
 
 **Description**
 Learn to move around and find things with only the keyboard. You use these commands every day on a server.

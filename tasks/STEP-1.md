@@ -492,11 +492,11 @@ Install Ubuntu, so you can follow the Terminal rule. This is the last ticket tha
 
 **Acceptance criteria**
 
-- [ ] `wsl -l -v` shows `Ubuntu` with version `2`, and a `*` next to it (it is the default).
-- [ ] With Docker Desktop open, `docker version` in Ubuntu shows both **Client** and **Server**.
-- [ ] In Ubuntu, I can go to the project folder and `git status` works.
-- [ ] `go version`, `curl --version` and `jq --version` work in Ubuntu.
-- [ ] I can answer: What is `/mnt/c`? Where does the `docker` command send its work?
+- [x] `wsl -l -v` shows `Ubuntu` with version `2`, and a `*` next to it (it is the default).
+- [x] With Docker Desktop open, `docker version` in Ubuntu shows both **Client** and **Server**.
+- [x] In Ubuntu, I can go to the project folder and `git status` works.
+- [x] `go version`, `curl --version` and `jq --version` work in Ubuntu.
+- [x] I can answer: What is `/mnt/c`? Where does the `docker` command send its work?
 
 <details>
 <summary>Hint 1</summary>
@@ -540,10 +540,10 @@ Learn to move around and find things with only the keyboard. You use these comma
 
 **Acceptance criteria**
 
-- [ ] In `~/practice`, I create folders, then create, read, copy, move and delete a file. I use `pwd`, `ls -la`, `cd`, `mkdir -p`, `cat`, `less`, `cp`, `mv` and `rm`.
+- [x] In `~/practice`, I create folders, then create, read, copy, move and delete a file. I use `pwd`, `ls -la`, `cd`, `mkdir -p`, `cat`, `less`, `cp`, `mv` and `rm`.
 - [ ] I find every place that uses `DATABASE_URL`, with file name and line number.
 - [ ] I find all `.go` files in the project.
-- [ ] I can answer: What do the columns in `ls -la` mean? What does `~` mean? Can I get a file back after `rm`?
+- [x] I can answer: What do the columns in `ls -la` mean? What does `~` mean? Can I get a file back after `rm`?
 
 <details>
 <summary>Hint 1</summary>

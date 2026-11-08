@@ -9,7 +9,7 @@ I can create an order and read it over HTTP. I know what happens when the databa
 | DS-1 | Install WSL2 + Docker Desktop     | Task  | 👤 Me     | ✅ Done                    |
 | DS-2 | Order Service Go code             | Story | 🤖 Claude | ✅ Done                    |
 | DS-3 | SQL script for the `orders` table | Task  | 👤 Me     | ✅ Done                    |
-| DS-4 | Multi-stage Dockerfile            | Task  | 👤 Me     | 🔲 To Do                   |
+| DS-4 | Multi-stage Dockerfile            | Task  | 👤 Me     | ✅ Done                    |
 | DS-5 | `docker-compose.yml`              | Task  | 👤 Me     | 🔲 To Do                   |
 | DS-6 | Experiment: stop the database     | Spike | 👤 Me     | 🔲 To Do                   |
 | DS-7 | Install Ubuntu in WSL             | Task  | 👤 Me     | ✅ Done                    |
@@ -23,7 +23,7 @@ I can create an order and read it over HTTP. I know what happens when the databa
 **Order:** DS-7 → DS-8 → DS-2 review → DS-3 → DS-4 → DS-5 → DS-6 → DS-9 → DS-10 → DS-11 → DS-12 → DS-13.
 (DS-5 needs DS-3 and DS-4. DS-6, DS-9, DS-11, DS-12 and DS-13 need DS-5.)
 
-**Next:** DS-4 — Multi-stage Dockerfile.
+**Next:** DS-5 — `docker-compose.yml`.
 
 > **Terminal:** Run every command in the **Ubuntu terminal**, unless a ticket says something else.
 > Go to the project folder with `cd /mnt/c/Users/saski/OneDrive/Desktop/destrubuted-system`.
@@ -195,7 +195,7 @@ CREATE TABLE IF NOT EXISTS orders (
 
 ## DS-4 — Multi-stage Dockerfile
 
-**Type:** Task · **Who:** 👤 Me · **Status:** 🔲 To Do
+**Type:** Task · **Who:** 👤 Me · **Status:** ✅ Done
 
 **Description**
 Put the Order Service into a small and safe Docker image.
@@ -218,7 +218,7 @@ Use a **multi-stage build**, which means two stages:
 | **`.dockerignore`** | Like `.gitignore`, but for the build context. Files in it are not sent to Docker.                                 |
 
 **Why two stages?** The `golang` image is big (~800 MB). It has the compiler, tools and source code.
-To _run_ the program, you only need the one binary file (~15 MB). So: build in a big image, copy only the binary into a tiny image, and throw away the big one.
+To _run_ the program, you only need the one binary file (~40 MB). So: build in a big image, copy only the binary into a tiny image, and throw away the big one.
 
 ### Steps to do
 
@@ -259,16 +259,18 @@ To _run_ the program, you only need the one binary file (~15 MB). So: build in a
 
 **Acceptance criteria**
 
-- [ ] The build stage uses an official `golang` image with the same version as `go.mod` (1.27). The stage has a name (for example `AS build`).
-- [ ] First copy `go.mod` and `go.sum`, run `go mod download`, and **after that** copy the rest of the code.
-- [ ] The binary is **static** (it needs no C libraries).
-- [ ] The run stage uses a very small base image and has **only** the binary.
-- [ ] The container does **not** run as `root`.
-- [ ] `EXPOSE 8080`, and the binary is the `ENTRYPOINT`.
-- [ ] `.dockerignore` keeps unneeded files out of the build (`.git`, binaries, notes, editor files).
-- [ ] `docker build -t order-service ./order-service` works.
-- [ ] I wrote down two sizes: my final image, and the `golang` base image.
-- [ ] I can answer: Why is the final image so much smaller? Why copy `go.mod` first (what is layer caching)? Why not run as root?
+- [x] The build stage uses an official `golang` image with the same version as `go.mod` (1.27). The stage has a name (for example `AS build`).
+- [x] First copy `go.mod` and `go.sum`, run `go mod download`, and **after that** copy the rest of the code.
+- [x] The binary is **static** (it needs no C libraries).
+- [x] The run stage uses a very small base image and has **only** the binary.
+- [x] The container does **not** run as `root`.
+- [x] `EXPOSE 8080`, and the binary is the `ENTRYPOINT`.
+- [x] `.dockerignore` keeps unneeded files out of the build (`.git`, binaries, notes, editor files).
+- [x] `docker build -t order-service ./order-service` works.
+- [x] I wrote down two sizes: my final image, and the `golang` base image.
+      `order-service`: 62.3 MB on disk, 19.4 MB to download. `golang:1.27-alpine`: 382 MB on disk, 75.5 MB to download.
+      My build stage alone (before the run stage): 1.04 GB.
+- [x] I can answer: Why is the final image so much smaller? Why copy `go.mod` first (what is layer caching)? Why not run as root?
 
 <details>
 <summary>Hint 1</summary>

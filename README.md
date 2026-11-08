@@ -115,7 +115,7 @@ The cloud costs **real money**. A forgotten server costs money **every hour**, e
 - [x] 🤖 Connect with `pgxpool`; read config (DB URL, port) from environment variables.
 - [x] 🤖 Basic input validation and proper HTTP status codes (400, 404, 500).
 - [x] 🤖 A `/health` endpoint.
-- [ ] Multi-stage Dockerfile.
+- [x] Multi-stage Dockerfile.
 - [ ] `docker-compose.yml` with Order Service + Postgres.
 
 **🐧 Linux practice** (in the Ubuntu WSL terminal):

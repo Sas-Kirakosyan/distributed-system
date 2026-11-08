@@ -8,7 +8,7 @@ I can create an order and read it over HTTP. I know what happens when the databa
 | ---- | --------------------------------- | ----- | --------- | -------------------------- |
 | DS-1 | Install WSL2 + Docker Desktop     | Task  | 👤 Me     | ✅ Done                    |
 | DS-2 | Order Service Go code             | Story | 🤖 Claude | ✅ Done                    |
-| DS-3 | SQL script for the `orders` table | Task  | 👤 Me     | 🔲 To Do                   |
+| DS-3 | SQL script for the `orders` table | Task  | 👤 Me     | ✅ Done                    |
 | DS-4 | Multi-stage Dockerfile            | Task  | 👤 Me     | 🔲 To Do                   |
 | DS-5 | `docker-compose.yml`              | Task  | 👤 Me     | 🔲 To Do                   |
 | DS-6 | Experiment: stop the database     | Spike | 👤 Me     | 🔲 To Do                   |
@@ -22,6 +22,8 @@ I can create an order and read it over HTTP. I know what happens when the databa
 
 **Order:** DS-7 → DS-8 → DS-2 review → DS-3 → DS-4 → DS-5 → DS-6 → DS-9 → DS-10 → DS-11 → DS-12 → DS-13.
 (DS-5 needs DS-3 and DS-4. DS-6, DS-9, DS-11, DS-12 and DS-13 need DS-5.)
+
+**Next:** DS-4 — Multi-stage Dockerfile.
 
 > **Terminal:** Run every command in the **Ubuntu terminal**, unless a ticket says something else.
 > Go to the project folder with `cd /mnt/c/Users/saski/OneDrive/Desktop/destrubuted-system`.
@@ -90,7 +92,7 @@ order-service/
 
 ## DS-3 — SQL script for the `orders` table
 
-**Type:** Task · **Who:** 👤 Me · **Status:** 🔲 To Do
+**Type:** Task · **Who:** 👤 Me · **Status:** ✅ Done
 
 **Description**
 The service needs an `orders` table in Postgres. Write a simple SQL script that creates it.
@@ -149,7 +151,7 @@ next starts:   data folder has data → skip init.sql → ready
 
 **Acceptance criteria**
 
-- [ ] The table looks **exactly** like this (the Go code needs these names and types):
+- [x] The table looks **exactly** like this (the Go code needs these names and types):
 
   | Column       | Rules                                                        |
   | ------------ | ------------------------------------------------------------ |
@@ -159,8 +161,8 @@ next starts:   data folder has data → skip init.sql → ready
   | `status`     | text, not null                                               |
   | `created_at` | time **with time zone**, not null, default = now             |
 
-- [ ] If the script runs two times, it does not fail.
-- [ ] I can answer: Why does the DB make the `id`, and not Go? Why `TIMESTAMPTZ` and not `TIMESTAMP`?
+- [x] If the script runs two times, it does not fail.
+- [x] I can answer: Why does the DB make the `id`, and not Go? Why `TIMESTAMPTZ` and not `TIMESTAMP`?
       Why check `amount > 0` in the DB, when Go already checks it?
 
 <details>

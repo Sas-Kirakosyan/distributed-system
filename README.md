@@ -111,7 +111,7 @@ The cloud costs **real money**. A forgotten server costs money **every hour**, e
 - [x] Set up WSL2 + Docker Desktop.
 - [x] Install Ubuntu in WSL and connect it to Docker Desktop.
 - [x] 🤖 Order Service in Go (Gin): `POST /orders` and `GET /orders/:id`.
-- [ ] PostgreSQL with an `orders` table (`id`, `user_id`, `amount`, `status`, `created_at`), created by a plain SQL init script.
+- [x] PostgreSQL with an `orders` table (`id`, `user_id`, `amount`, `status`, `created_at`), created by a plain SQL init script.
 - [x] 🤖 Connect with `pgxpool`; read config (DB URL, port) from environment variables.
 - [x] 🤖 Basic input validation and proper HTTP status codes (400, 404, 500).
 - [x] 🤖 A `/health` endpoint.

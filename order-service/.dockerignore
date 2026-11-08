@@ -1,0 +1,10 @@
+.git
+.env
+db/
+Dockerfile
+.dockerignore
+*.md
+*.exe
+.vscode/
+.idea/
+order-service

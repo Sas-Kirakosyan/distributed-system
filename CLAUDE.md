@@ -19,3 +19,4 @@
 
 - Windows with WSL2. I work in the Ubuntu terminal, in `/mnt/c/Users/saski/OneDrive/Desktop/destrubuted-system`.
 - Windows has its own Postgres on ports 5432 and 5433. Do not publish Docker ports on them.
+- Windows reserves TCP ports 50000–50059, 55044–55443 and 55508–55607 (checked 2026-11-18; the ranges can change after a reboot). Docker cannot publish ports there. Use for example 15432 for a temporary Postgres.

@@ -116,16 +116,16 @@ The cloud costs **real money**. A forgotten server costs money **every hour**, e
 - [x] 🤖 Basic input validation and proper HTTP status codes (400, 404, 500).
 - [x] 🤖 A `/health` endpoint.
 - [x] Multi-stage Dockerfile.
-- [ ] `docker-compose.yml` with Order Service + Postgres.
+- [x] `docker-compose.yml` with Order Service + Postgres.
 
 **🐧 Linux practice** (in the Ubuntu WSL terminal):
 
 - [x] Move around and work with files: `pwd`, `ls -la`, `cd`, `mkdir -p`, `cat`, `less`, `cp`, `mv`, `rm`.
 - [x] Search: find every place that uses `DATABASE_URL` with `grep -rn`. Find all `.go` files with `find`.
-- [ ] Environment variables: `env`, `export`, `echo $HOME`. Run the service with `DATABASE_URL=... go run .`
-- [ ] Processes and ports: `ps aux`, `top`, `ss -tlnp`. Which program listens on port 8080?
-- [ ] Permissions: what does `rwxr-xr-x` mean? Use `chmod +x`. Why must a container not run as `root`?
-- [ ] Pipes: `docker compose logs order-service | grep -i error | wc -l`. What does each part do?
+- [x] Environment variables: `env`, `export`, `echo $HOME`. Run the service with `DATABASE_URL=... go run .`
+- [x] Processes and ports: `ps aux`, `top`, `ss -tlnp`. Which program listens on port 8080?
+- [x] Permissions: what does `rwxr-xr-x` mean? Use `chmod +x`. Why must a container not run as `root`?
+- [x] Pipes: `docker compose logs order-service | grep -i error | wc -l`. What does each part do?
 - [ ] Look inside a container: `docker exec -it <postgres-container> bash`, then `ps aux` and `cat /etc/os-release`.
   How many processes do you see? Why so few?
 - [ ] Write my first bash script `scripts/smoke-test.sh`: it calls `/health`, creates an order, reads it back,
@@ -133,9 +133,9 @@ The cloud costs **real money**. A forgotten server costs money **every hour**, e
 
 **Experiments:**
 
-- [ ] Stop Postgres while the service runs. What does the API return? What do the logs say?
-- [ ] Restart Postgres. Does the service recover on its own?
-- [ ] Run `docker compose down`, then `docker compose down -v`. Is my order data still there after each one? Why? (Container vs volume.)
+- [x] Stop Postgres while the service runs. What does the API return? What do the logs say?
+- [x] Restart Postgres. Does the service recover on its own?
+- [x] Run `docker compose down`, then `docker compose down -v`. Is my order data still there after each one? Why? (Container vs volume.)
 
 📋 **Tickets with acceptance criteria and hints: [tasks/STEP-1.md](tasks/STEP-1.md)**
 

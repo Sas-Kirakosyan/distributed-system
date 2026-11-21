@@ -10,20 +10,20 @@ I can create an order and read it over HTTP. I know what happens when the databa
 | DS-2 | Order Service Go code             | Story | 🤖 Claude | ✅ Done                    |
 | DS-3 | SQL script for the `orders` table | Task  | 👤 Me     | ✅ Done                    |
 | DS-4 | Multi-stage Dockerfile            | Task  | 👤 Me     | ✅ Done                    |
-| DS-5 | `docker-compose.yml`              | Task  | 👤 Me     | 🔲 To Do                   |
-| DS-6 | Experiment: stop the database     | Spike | 👤 Me     | 🔲 To Do                   |
+| DS-5 | `docker-compose.yml`              | Task  | 👤 Me     | ✅ Done                    |
+| DS-6 | Experiment: stop the database     | Spike | 👤 Me     | ✅ Done                    |
 | DS-7 | Install Ubuntu in WSL             | Task  | 👤 Me     | ✅ Done                    |
 | DS-8 | Linux: files and search           | Task  | 👤 Me     | ✅ Done                    |
-| DS-9 | Experiment: container vs volume   | Spike | 👤 Me     | 🔲 To Do                   |
-| DS-10 | Linux: env, processes and ports  | Task  | 👤 Me     | 🔲 To Do                   |
-| DS-11 | Linux: permissions and pipes     | Task  | 👤 Me     | 🔲 To Do                   |
+| DS-9 | Experiment: container vs volume   | Spike | 👤 Me     | ✅ Done                    |
+| DS-10 | Linux: env, processes and ports  | Task  | 👤 Me     | ✅ Done                    |
+| DS-11 | Linux: permissions and pipes     | Task  | 👤 Me     | ✅ Done                    |
 | DS-12 | Linux: look inside a container   | Task  | 👤 Me     | 🔲 To Do                   |
 | DS-13 | Bash script: `smoke-test.sh`     | Task  | 👤 Me     | 🔲 To Do                   |
 
 **Order:** DS-7 → DS-8 → DS-2 review → DS-3 → DS-4 → DS-5 → DS-6 → DS-9 → DS-10 → DS-11 → DS-12 → DS-13.
 (DS-5 needs DS-3 and DS-4. DS-6, DS-9, DS-11, DS-12 and DS-13 need DS-5.)
 
-**Next:** DS-5 — `docker-compose.yml`.
+**Next:** DS-12 — Linux: look inside a container.
 
 > **Terminal:** Run every command in the **Ubuntu terminal**, unless a ticket says something else.
 > Go to the project folder with `cd /mnt/c/Users/saski/OneDrive/Desktop/destrubuted-system`.
@@ -311,7 +311,7 @@ ENTRYPOINT ["____"]
 
 ## DS-5 — `docker-compose.yml`
 
-**Type:** Task · **Who:** 👤 Me · **Status:** 🔲 To Do · **Needs:** DS-3, DS-4
+**Type:** Task · **Who:** 👤 Me · **Status:** ✅ Done · **Needs:** DS-3, DS-4
 
 **Description**
 One command, `docker compose up --build`, starts Postgres and the Order Service.
@@ -389,16 +389,23 @@ your computer
 
 **Acceptance criteria**
 
-- [ ] A `postgres` service: official image (for example `postgres:17`), with user, password and database name set by env vars.
-- [ ] Your `init.sql` (DS-3) is mounted, so Postgres runs it on the first start.
-- [ ] Postgres data is in a **named volume**, so it is not lost after `docker compose down`.
-- [ ] Postgres has a **healthcheck**.
-- [ ] An `order-service` service: builds from `./order-service`, publishes port `8080`, and gets `DATABASE_URL` as an env var.
-- [ ] `order-service` waits until Postgres is **healthy** (ready to work), not only **started**.
-- [ ] `curl http://localhost:8080/health` returns `200`.
-- [ ] `POST /orders`, then `GET /orders/:id` returns the same order.
+- [x] A `postgres` service: official image (for example `postgres:17`), with user, password and database name set by env vars.
+- [x] Your `init.sql` (DS-3) is mounted, so Postgres runs it on the first start.
+- [x] Postgres data is in a **named volume**, so it is not lost after `docker compose down`.
+- [x] Postgres has a **healthcheck**.
+- [x] An `order-service` service: builds from `./order-service`, publishes port `8080`, and gets `DATABASE_URL` as an env var.
+- [x] `order-service` waits until Postgres is **healthy** (ready to work), not only **started**.
+- [x] `curl http://localhost:8080/health` returns `200`.
+- [x] `POST /orders`, then `GET /orders/:id` returns the same order.
 - [ ] I can answer: Why is the DB host not `localhost`? Does the init script run on every start, or only once?
       What is the difference between "started" and "healthy"?
+
+**Review notes (Claude):**
+
+- Seen: `ps` shows `postgres` as `healthy`. The logs show `connected to database` and `listening`. The order survived a restart.
+  A bad id (not a UUID) returns `400`. Still to try: a valid UUID that is not in the table must return `404`.
+- Open bug (small): `pg_isready` with no host uses the Unix socket. During the first init, the temporary server listens
+  only on that socket, so the check can say "healthy" before `init.sql` ends. Fix: make it connect over TCP (`man pg_isready`, the host option).
 
 <details>
 <summary>Hint 1</summary>
@@ -461,7 +468,7 @@ curl -i http://localhost:8080/orders/<id-from-above>
 
 ## DS-6 — Experiment: stop the database
 
-**Type:** Spike · **Who:** 👤 Me · **Status:** 🔲 To Do · **Needs:** DS-5
+**Type:** Spike · **Who:** 👤 Me · **Status:** ✅ Done · **Needs:** DS-5
 
 **Description**
 Break the database on purpose and watch what the service does.
@@ -469,12 +476,19 @@ Write what you see in `notes/step1.md`.
 
 **Acceptance criteria**
 
-- [ ] Everything is running. Stop only Postgres: `docker compose stop postgres`.
-- [ ] Write down: what do `GET /health`, `POST /orders` and `GET /orders/:id` return? (status code + body)
-- [ ] Write down: what do the service logs say? (`docker compose logs -f order-service`)
-- [ ] How long does one request take while the DB is down? Why this long? (Look for a timeout in `handler.go`.)
-- [ ] Start Postgres again: `docker compose start postgres`. Do **not** restart the service. Does it work again by itself? Why?
-- [ ] Bonus: stop Postgres, then restart the **Order Service**. What happens? Why is it different?
+- [x] Everything is running. Stop only Postgres: `docker compose stop postgres`.
+- [x] Write down: what do `GET /health`, `POST /orders` and `GET /orders/:id` return? (status code + body)
+- [x] Write down: what do the service logs say? (`docker compose logs -f order-service`)
+- [x] How long does one request take while the DB is down? Why this long? (Look for a timeout in `handler.go`.)
+- [x] Start Postgres again: `docker compose start postgres`. Do **not** restart the service. Does it work again by itself? Why?
+- [x] Bonus: stop Postgres, then restart the **Order Service**. What happens? Why is it different?
+
+**Review notes (Claude):**
+
+- Seen: with the DB down, `GET /health` → `503 {"db":"down","status":"unhealthy"}` in 1.0 s (health timeout 1 s).
+  `POST /orders` → `500` in 3 s, log `create order failed error="context deadline exceeded"` (`dbTimeout` 3 s).
+- After `docker compose start postgres`, the running service worked again by itself.
+- Not seen by Claude: `GET /orders/:id` with the DB down, and the bonus output. The results are not yet written in `notes/step1.md`.
 
 <details>
 <summary>Hint 1</summary>
@@ -573,17 +587,23 @@ find . -name "____"
 
 ## DS-9 — Experiment: container vs volume
 
-**Type:** Spike · **Who:** 👤 Me · **Status:** 🔲 To Do · **Needs:** DS-5
+**Type:** Spike · **Who:** 👤 Me · **Status:** ✅ Done · **Needs:** DS-5
 
 **Description**
 Learn where your data really lives. Write what you see in `notes/step1.md`: 2–3 lines with what you did, what you saw, and why.
 
 **Acceptance criteria**
 
-- [ ] I create an order and save its id.
-- [ ] I run `docker compose down`, then `up`. I read the order. I write down the result.
-- [ ] I run `docker compose down -v`, then `up`. I read the order. I write down the result.
-- [ ] I can answer: What did `-v` delete? Did `init.sql` run again? Why?
+- [x] I create an order and save its id.
+- [x] I run `docker compose down`, then `up`. I read the order. I write down the result.
+- [x] I run `docker compose down -v`, then `up`. I read the order. I write down the result.
+- [x] I can answer: What did `-v` delete? Did `init.sql` run again? Why?
+
+**Review notes (Claude):**
+
+- Answer given: `-v` deleted the data, and after `up`, Postgres ran `init.sql` again. Correct.
+- More exact: `-v` deletes the **named volume** (`postgres_data`). The volume holds the Postgres data folder. The folder was empty, so the image ran the first-start setup again.
+- Not yet written in `notes/step1.md`.
 
 <details>
 <summary>Hint 1</summary>
@@ -596,7 +616,7 @@ Learn where your data really lives. Write what you see in `notes/step1.md`: 2–
 
 ## DS-10 — Linux: env, processes and ports
 
-**Type:** Task · **Who:** 👤 Me · **Status:** 🔲 To Do · **Needs:** DS-7
+**Type:** Task · **Who:** 👤 Me · **Status:** ✅ Done · **Needs:** DS-7
 
 **Description**
 Run the service directly in Ubuntu, with no container. Give it its config with environment variables, then find its process and its port.
@@ -605,10 +625,12 @@ Run the service directly in Ubuntu, with no container. Give it its config with e
 
 1. Start a temporary Postgres. This one publishes a port, so Ubuntu can reach it:
    ```bash
-   docker run -d --name pg-test -e POSTGRES_PASSWORD=test -p 55432:5432 postgres:17
+   docker run -d --name pg-test -e POSTGRES_PASSWORD=test -p 15432:5432 postgres:17
    ```
-   Why `55432`? Windows on this computer has its own Postgres on ports 5432 and 5433.
+   Why `15432`? Windows on this computer has its own Postgres on ports 5432 and 5433.
    If you use those ports, you can connect to the wrong database and get `password authentication failed`.
+   Also, Windows **reserves** some port ranges (55432 is in one of them), and Docker cannot use those.
+   See the reserved ranges in PowerShell: `netsh interface ipv4 show excludedportrange protocol=tcp`.
 2. In `order-service/`, run `go run .` with no variables. Read the error.
 3. Run it again with `DATABASE_URL`, and with `PORT=8081`, so it does not use the same port as Compose.
 4. In a second terminal, look for the process and the port.
@@ -616,18 +638,26 @@ Run the service directly in Ubuntu, with no container. Give it its config with e
 
 **Acceptance criteria**
 
-- [ ] I can show a variable with `env` and `echo $HOME`, and I can set one with `export`.
-- [ ] `curl http://localhost:8081/health` returns `200`.
-- [ ] I found the process with `ps aux`, and watched it in `top`.
-- [ ] `ss -tlnp` shows which program listens on port 8081.
-- [ ] I can answer: What is the difference between `VAR=x command` and `export VAR=x`? What is the program name, and why is it not `go`?
+- [x] I can show a variable with `env` and `echo $HOME`, and I can set one with `export`.
+- [x] `curl http://localhost:8081/health` returns `200`.
+- [x] I found the process with `ps aux`, and watched it in `top`.
+- [x] `ss -tlnp` shows which program listens on port 8081.
+- [x] I can answer: What is the difference between `VAR=x command` and `export VAR=x`? What is the program name, and why is it not `go`?
+
+**Review notes (Claude):**
+
+- Seen: `ps aux` → `/tmp/go-build.../exe/order-service`, PID 4859. `ss -tlnp` → `*:8081` held by `"order-service",pid=4859`.
+  The same PID in both: `ps` shows what runs, `ss` shows which port it holds.
+- Seen: the env test. `VAR=x cmd` → only that command gets it. `export` → the shell keeps it, and child processes get a copy.
+- The two "why" answers needed help from Claude: `go run` = build a temporary binary + start it. Env vars are a copy per process.
+  Say them again in your own words before the Step 1 "Done when" check.
 
 <details>
 <summary>Hint 1</summary>
 
 - Connection URL: `postgres://USER:PASSWORD@HOST:PORT/DBNAME?sslmode=disable`.
 - The default user and database in the Postgres image are both `postgres`.
-- From Ubuntu, the host is `localhost`, and the port is the left number in `-p 55432:5432`.
+- From Ubuntu, the host is `localhost`, and the port is the left number in `-p 15432:5432`.
 - You do not see the program name in `ss`? Try `sudo ss -tlnp`.
 </details>
 
@@ -649,7 +679,7 @@ sudo ss -tlnp | grep ____
 
 ## DS-11 — Linux: permissions and pipes
 
-**Type:** Task · **Who:** 👤 Me · **Status:** 🔲 To Do · **Needs:** DS-5
+**Type:** Task · **Who:** 👤 Me · **Status:** ✅ Done · **Needs:** DS-5
 
 **Description**
 Learn to read file permissions and to connect small commands together.
@@ -659,11 +689,11 @@ Windows files do not normally keep Linux permissions, so `chmod` may seem to do 
 
 **Acceptance criteria**
 
-- [ ] I can read `rwxr-xr-x`: who can read, write and run the file?
-- [ ] I create `~/practice/hello.sh`. `./hello.sh` fails with `Permission denied`. After `chmod +x`, it works.
-- [ ] I stop Postgres and make a few requests, so the logs have errors. Then I run `docker compose logs order-service | grep -i error | wc -l`.
-- [ ] I can explain each of the 3 parts of this pipe, and what `|` does.
-- [ ] I can answer: Why must a container not run as `root`?
+- [x] I can read `rwxr-xr-x`: who can read, write and run the file?
+- [x] I create `~/practice/hello.sh`. `./hello.sh` fails with `Permission denied`. After `chmod +x`, it works.
+- [x] I stop Postgres and make a few requests, so the logs have errors. Then I run `docker compose logs order-service | grep -i error | wc -l`.
+- [x] I can explain each of the 3 parts of this pipe, and what `|` does.
+- [x] I can answer: Why must a container not run as `root`?
 
 <details>
 <summary>Hint 1</summary>

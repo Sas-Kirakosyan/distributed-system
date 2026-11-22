@@ -128,7 +128,7 @@ The cloud costs **real money**. A forgotten server costs money **every hour**, e
 - [x] Pipes: `docker compose logs order-service | grep -i error | wc -l`. What does each part do?
 - [x] Look inside a container: `docker exec -it <postgres-container> bash`, then `ps aux` and `cat /etc/os-release`.
   How many processes do you see? Why so few?
-- [ ] Write my first bash script `scripts/smoke-test.sh`: it calls `/health`, creates an order, reads it back,
+- [x] Write my first bash script `scripts/smoke-test.sh`: it calls `/health`, creates an order, reads it back,
   and **exits with code 1** if something fails. (I use this script again in CI and after every deploy.)
 
 **Experiments:**

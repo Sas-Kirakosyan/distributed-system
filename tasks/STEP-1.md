@@ -18,12 +18,12 @@ I can create an order and read it over HTTP. I know what happens when the databa
 | DS-10 | Linux: env, processes and ports  | Task  | 👤 Me     | ✅ Done                    |
 | DS-11 | Linux: permissions and pipes     | Task  | 👤 Me     | ✅ Done                    |
 | DS-12 | Linux: look inside a container   | Task  | 👤 Me     | ✅ Done                    |
-| DS-13 | Bash script: `smoke-test.sh`     | Task  | 👤 Me     | 🔲 To Do                   |
+| DS-13 | Bash script: `smoke-test.sh`     | Task  | 👤 Me     | ✅ Done                    |
 
 **Order:** DS-7 → DS-8 → DS-2 review → DS-3 → DS-4 → DS-5 → DS-6 → DS-9 → DS-10 → DS-11 → DS-12 → DS-13.
 (DS-5 needs DS-3 and DS-4. DS-6, DS-9, DS-11, DS-12 and DS-13 need DS-5.)
 
-**Next:** DS-13 — Bash script: `smoke-test.sh`.
+**Next:** Write `notes/step1.md`, then the Step 1 "Done when" check (see Definition of Done at the end).
 
 > **Terminal:** Run every command in the **Ubuntu terminal**, unless a ticket says something else.
 > Go to the project folder with `cd /mnt/c/Users/saski/OneDrive/Desktop/destrubuted-system`.
@@ -397,15 +397,16 @@ your computer
 - [x] `order-service` waits until Postgres is **healthy** (ready to work), not only **started**.
 - [x] `curl http://localhost:8080/health` returns `200`.
 - [x] `POST /orders`, then `GET /orders/:id` returns the same order.
-- [ ] I can answer: Why is the DB host not `localhost`? Does the init script run on every start, or only once?
+- [x] I can answer: Why is the DB host not `localhost`? Does the init script run on every start, or only once?
       What is the difference between "started" and "healthy"?
 
 **Review notes (Claude):**
 
 - Seen: `ps` shows `postgres` as `healthy`. The logs show `connected to database` and `listening`. The order survived a restart.
-  A bad id (not a UUID) returns `400`. Still to try: a valid UUID that is not in the table must return `404`.
-- Open bug (small): `pg_isready` with no host uses the Unix socket. During the first init, the temporary server listens
+  A bad id (not a UUID) returns `400`. A valid UUID that is not in the table (`00000000-...`) returns `404`.
+- Fixed bug: `pg_isready` with no host uses the Unix socket. During the first init, the temporary server listens
   only on that socket, so the check can say "healthy" before `init.sql` ends. Fix: make it connect over TCP (`man pg_isready`, the host option).
+  Fixed with `-h localhost`. Tested from zero (`down -v` → `up -d`): Postgres `healthy` in ~6 s, smoke test `OK`, exit `0`.
 
 <details>
 <summary>Hint 1</summary>
@@ -743,7 +744,7 @@ See with your own eyes that a container is only a Linux process with its own vie
 
 ## DS-13 — Bash script: `smoke-test.sh`
 
-**Type:** Task · **Who:** 👤 Me · **Status:** 🔲 To Do · **Needs:** DS-5, DS-11
+**Type:** Task · **Who:** 👤 Me · **Status:** ✅ Done · **Needs:** DS-5, DS-11
 
 **Description**
 A **smoke test** is a short test that answers one question: "Does the main path work?"
@@ -751,16 +752,61 @@ Write it once. You use it again in CI, on the AWS server, and after every deploy
 
 **File:** `scripts/smoke-test.sh`
 
+### Words you need
+
+| Word | Meaning |
+| --- | --- |
+| **Exit code** | A number a program gives back when it ends. `0` = OK. Any other number = failed. `echo $?` shows the exit code of the last command. (Like `process.exit(1)` in Node.) |
+| **Shebang** | The first line of a script, starting with `#!`. It tells Linux which program runs the file. |
+| **Argument** | A word you write after the script name: `scripts/smoke-test.sh http://x`. Inside the script, the first one is `$1`. (Like `process.argv[2]` in Node.) |
+| **Status code only** | `curl` normally prints the body. For a check, you want only the number (`200`, `201`...). |
+
+**Why it matters:** CI does not read your output. It only looks at the **exit code**. `0` → green. Not `0` → red, and the pipeline stops.
+
+### Steps to do
+
+1. **Start everything:** `docker compose up -d`.
+2. **Try each check by hand first**, in the terminal, before you write the script:
+   1. Get **only the status code** of `GET /health` with `curl`. (Find the right `curl` options.)
+   2. Do the same for `POST /orders`, but also **save the body** to a file, so you can read the `id` later.
+   3. Take the `id` out of that file with `jq`.
+   4. Get the status code of `GET /orders/<id>`.
+   When each one works alone, put them in the script.
+3. **Create the file** `scripts/smoke-test.sh` in the project root folder. In VS Code, check that the bottom bar says `LF`, not `CRLF`.
+4. **Write the top of the script:** the shebang, `set -euo pipefail`, and a `BASE_URL` variable that uses `$1`, or `http://localhost:8080` when there is no `$1`.
+5. **Write check 1 (health).** If the code is not `200`, print which check failed and exit with `1`.
+   Run the script now: `bash scripts/smoke-test.sh; echo $?`. It must print `0`.
+   Build the script in small parts like this: add one check, run it, then add the next.
+6. **Write check 2 (create).** Expect `201`. Save the `id`.
+7. **Write check 3 (read).** Expect `200`, **and** check that the `id` in the answer is the same as the `id` you saved.
+8. **At the end**, print `OK`. The script exits with `0` by itself.
+9. **Run it like a program:** `./scripts/smoke-test.sh; echo $?`.
+10. **Test that it fails correctly:**
+    - `docker compose stop postgres` → run the script → it must print a `FAIL` line and `1`. Then `docker compose start postgres`.
+    - `docker compose stop order-service` → run the script → it must print `1`. Then `docker compose start order-service`.
+11. **Test the argument:** `./scripts/smoke-test.sh http://localhost:8080` must also work.
+12. **Save it in git as executable:** add it with `git add --chmod=+x scripts/smoke-test.sh`.
+    Check with `git ls-files --stage scripts/smoke-test.sh`. It must start with `100755`.
+13. Push your work or paste it to Claude → Claude reviews it.
+
 **Acceptance criteria**
 
-- [ ] The script calls `/health` and expects `200`.
-- [ ] It creates an order and expects `201`.
-- [ ] It reads the order by its id, expects `200`, and checks that the id is the same.
-- [ ] It takes the address as its first argument, and uses `http://localhost:8080` if there is none.
-- [ ] It **exits with code 1** if something fails, and with code 0 if all is good. It prints which check failed.
-- [ ] With Postgres stopped, `scripts/smoke-test.sh; echo $?` prints `1`. With the service stopped, it also prints `1`.
-- [ ] Git saves the file as executable: `git ls-files --stage scripts/smoke-test.sh` starts with `100755`.
-- [ ] I can answer: What is an exit code? How does CI use it? What does `set -euo pipefail` do?
+- [x] The script calls `/health` and expects `200`.
+- [x] It creates an order and expects `201`.
+- [x] It reads the order by its id, expects `200`, and checks that the id is the same.
+- [x] It takes the address as its first argument, and uses `http://localhost:8080` if there is none.
+- [x] It **exits with code 1** if something fails, and with code 0 if all is good. It prints which check failed.
+- [x] With Postgres stopped, `scripts/smoke-test.sh; echo $?` prints `1`. With the service stopped, it also prints `1`.
+- [x] Git saves the file as executable: `git ls-files --stage scripts/smoke-test.sh` starts with `100755`.
+- [x] I can answer: What is an exit code? How does CI use it? What does `set -euo pipefail` do?
+
+**Review notes (Claude):**
+
+- Seen: all 3 checks pass → `OK`, exit `0`. Postgres stopped → `FAIL: health returned 503`, exit `1`.
+  Service stopped → `FAIL: health returned 000`, exit `1`. A wrong address (`:9999`) also fails with `1`.
+- Good: `|| true` keeps `set -e` from stopping before the `FAIL` line; `!=` compares codes as text; `FAIL` goes to stderr;
+  check 3 compares the `id`, not only the status code.
+- First version only printed the `curl` output and always exited `0`, even with a `503`. Fixed after the experiment.
 
 <details>
 <summary>Hint 1</summary>
@@ -810,7 +856,7 @@ echo "OK"
 
 ## Definition of Done (Step 1)
 
-- [ ] DS-1 … DS-13 are done. Claude reviewed DS-3, DS-4, DS-5 and DS-13 from what I pushed or pasted.
+- [x] DS-1 … DS-13 are done. Claude reviewed DS-3, DS-4, DS-5 and DS-13 from what I pushed or pasted.
 - [ ] `notes/step1.md` has my experiment results.
 - [ ] I can explain without looking: request → handler → DB → response; what a connection pool is and why we need it;
       why multi-stage builds make images smaller; how containers find each other by name in Compose;

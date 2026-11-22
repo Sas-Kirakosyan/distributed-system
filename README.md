@@ -126,7 +126,7 @@ The cloud costs **real money**. A forgotten server costs money **every hour**, e
 - [x] Processes and ports: `ps aux`, `top`, `ss -tlnp`. Which program listens on port 8080?
 - [x] Permissions: what does `rwxr-xr-x` mean? Use `chmod +x`. Why must a container not run as `root`?
 - [x] Pipes: `docker compose logs order-service | grep -i error | wc -l`. What does each part do?
-- [ ] Look inside a container: `docker exec -it <postgres-container> bash`, then `ps aux` and `cat /etc/os-release`.
+- [x] Look inside a container: `docker exec -it <postgres-container> bash`, then `ps aux` and `cat /etc/os-release`.
   How many processes do you see? Why so few?
 - [ ] Write my first bash script `scripts/smoke-test.sh`: it calls `/health`, creates an order, reads it back,
   and **exits with code 1** if something fails. (I use this script again in CI and after every deploy.)

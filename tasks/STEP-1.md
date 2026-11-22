@@ -17,13 +17,13 @@ I can create an order and read it over HTTP. I know what happens when the databa
 | DS-9 | Experiment: container vs volume   | Spike | 👤 Me     | ✅ Done                    |
 | DS-10 | Linux: env, processes and ports  | Task  | 👤 Me     | ✅ Done                    |
 | DS-11 | Linux: permissions and pipes     | Task  | 👤 Me     | ✅ Done                    |
-| DS-12 | Linux: look inside a container   | Task  | 👤 Me     | 🔲 To Do                   |
+| DS-12 | Linux: look inside a container   | Task  | 👤 Me     | ✅ Done                    |
 | DS-13 | Bash script: `smoke-test.sh`     | Task  | 👤 Me     | 🔲 To Do                   |
 
 **Order:** DS-7 → DS-8 → DS-2 review → DS-3 → DS-4 → DS-5 → DS-6 → DS-9 → DS-10 → DS-11 → DS-12 → DS-13.
 (DS-5 needs DS-3 and DS-4. DS-6, DS-9, DS-11, DS-12 and DS-13 need DS-5.)
 
-**Next:** DS-12 — Linux: look inside a container.
+**Next:** DS-13 — Bash script: `smoke-test.sh`.
 
 > **Terminal:** Run every command in the **Ubuntu terminal**, unless a ticket says something else.
 > Go to the project folder with `cd /mnt/c/Users/saski/OneDrive/Desktop/destrubuted-system`.
@@ -708,18 +708,29 @@ Windows files do not normally keep Linux permissions, so `chmod` may seem to do 
 
 ## DS-12 — Linux: look inside a container
 
-**Type:** Task · **Who:** 👤 Me · **Status:** 🔲 To Do · **Needs:** DS-5
+**Type:** Task · **Who:** 👤 Me · **Status:** ✅ Done · **Needs:** DS-5
 
 **Description**
 See with your own eyes that a container is only a Linux process with its own view of the system.
 
 **Acceptance criteria**
 
-- [ ] I open a shell in the Postgres container with `docker exec -it <postgres-container> bash`.
-- [ ] I run `ps aux` and `cat /etc/os-release` inside it.
-- [ ] I write down: how many processes are there? Which program is PID 1? Which Linux is it? Is it the same as Ubuntu?
-- [ ] I compare the count with `ps aux | wc -l` in Ubuntu.
-- [ ] I can answer: Why so few processes? What happens to the container when PID 1 stops?
+- [x] I open a shell in the Postgres container with `docker exec -it <postgres-container> bash`.
+- [x] I run `ps aux` and `cat /etc/os-release` inside it.
+- [x] I write down: how many processes are there? Which program is PID 1? Which Linux is it? Is it the same as Ubuntu?
+- [x] I compare the count with `ps aux | wc -l` in Ubuntu.
+- [x] I can answer: Why so few processes? What happens to the container when PID 1 stops?
+
+**Review notes (Claude):**
+
+- Seen: in the container, PID 1 = `postgres`, plus its helpers (checkpointer, background writer, walwriter, autovacuum, logical replication).
+  After a `POST /orders`, a new row appeared: `postgres: admin orders 172.19.0.x(...)`. This is one pool connection.
+  Postgres starts one process per client connection. `pgxpool` closes a connection after 30 min with no use.
+- Seen: the container is Debian 13, and WSL is Ubuntu 26.04. Different files, but the same kernel (Docker Desktop's Linux).
+- Seen: `wc -l` gave 9 in the container and 45 in Ubuntu (minus 1 header line = 8 and 44). Ubuntu cannot see container processes:
+  they run in Docker Desktop's Linux, and the container has its own **PID namespace**.
+- First mistakes, fixed with help: the helper rows are not pool connections; `os-release` was run in Ubuntu first; `cd` does not change `ps aux`.
+- Not yet written in `notes/step1.md`.
 
 <details>
 <summary>Hint 1</summary>

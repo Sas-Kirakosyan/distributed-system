@@ -560,8 +560,8 @@ Learn to move around and find things with only the keyboard. You use these comma
 **Acceptance criteria**
 
 - [x] In `~/practice`, I create folders, then create, read, copy, move and delete a file. I use `pwd`, `ls -la`, `cd`, `mkdir -p`, `cat`, `less`, `cp`, `mv` and `rm`.
-- [ ] I find every place that uses `DATABASE_URL`, with file name and line number.
-- [ ] I find all `.go` files in the project.
+- [x] I find every place that uses `DATABASE_URL`, with file name and line number.
+- [x] I find all `.go` files in the project.
 - [x] I can answer: What do the columns in `ls -la` mean? What does `~` mean? Can I get a file back after `rm`?
 
 <details>

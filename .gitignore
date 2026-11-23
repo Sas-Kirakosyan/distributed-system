@@ -38,3 +38,9 @@ desktop.ini
 # Local data / logs
 *.log
 tmp/
+
+# Learning files (local only, not in the public repo)
+tasks/
+notes/
+CLAUDE.md
+docs/database.md

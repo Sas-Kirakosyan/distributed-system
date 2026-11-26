@@ -104,7 +104,7 @@ The cloud costs **real money**. A forgotten server costs money **every hour**, e
 
 ---
 
-## Step 1 — Linux + Docker: one service, one database (~2 weeks) 🔨 in progress
+## Step 1 — Linux + Docker: one service, one database (~2 weeks) ✅ done
 
 **New concept:** containers, and the Linux command line.
 
@@ -148,12 +148,12 @@ where container data lives (volumes); what an exit code is and why scripts need 
 
 ---
 
-## Step 2 — CI: test and build on every push (~2 weeks)
+## Step 2 — CI: test and build on every push (~2 weeks) 🔨 in progress
 
 **New concept:** Continuous Integration — a machine checks every change, not me.
 
 - [x] Push the repo to GitHub.
-- [ ] 🤖 A few Go tests (`go test ./...`).
+- [x] 🤖 A few Go tests (`go test ./...`).
 - [ ] GitHub Actions workflow on every push and pull request: `go vet`, `go test`, lint, `docker build`.
 - [ ] Cache Go modules and Docker layers, so the pipeline is fast.
 - [ ] On push to `main`: push the image to GitHub Container Registry (GHCR).
@@ -166,6 +166,8 @@ where container data lives (volumes); what an exit code is and why scripts need 
 
 - [ ] Break a test on purpose and open a pull request. Is the merge blocked?
 - [ ] Change only a comment. How much faster is the pipeline with the cache?
+
+📋 **Tickets with acceptance criteria and hints: [tasks/STEP-2.md](tasks/STEP-2.md)**
 
 **Done when I can explain:** CI vs CD; why we tag images with the commit SHA and not `latest`;
 how secrets work in GitHub Actions; why tests run before the image is built; why a pipeline should fail fast.
